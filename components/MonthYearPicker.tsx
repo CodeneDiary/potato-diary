@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import dayjs from "dayjs";
 import React, { useState } from "react";
 import {
   FlatList,
@@ -25,6 +26,10 @@ export default function MonthYearPicker({
 }: Props) {
   const [selectedYear, setSelectedYear] = useState(initialYear);
 
+  const today = dayjs();
+  const currentYear = today.year();
+  const currentMonth = today.month() + 1;
+
   return (
     <Modal visible={visible} transparent animationType="fade">
       <TouchableWithoutFeedback onPress={onClose}>
@@ -45,17 +50,34 @@ export default function MonthYearPicker({
                 data={Array.from({ length: 12 }, (_, i) => i + 1)}
                 numColumns={3}
                 keyExtractor={(item) => item.toString()}
-                renderItem={({ item }) => (
-                  <Pressable
-                    style={styles.monthButton}
-                    onPress={() => {
-                      onSelect(selectedYear, item);
-                      onClose();
-                    }}
-                  >
-                    <Text style={styles.monthText}>{item}월</Text>
-                  </Pressable>
-                )}
+                renderItem={({ item }) => {
+                  const isFuture =
+                    selectedYear > currentYear ||
+                    (selectedYear === currentYear && item > currentMonth);
+
+                  return (
+                    <Pressable
+                      disabled={isFuture}
+                      style={[
+                        styles.monthButton,
+                        isFuture && { backgroundColor: "#e5e5e5" },
+                      ]}
+                      onPress={() => {
+                        onSelect(selectedYear, item);
+                        onClose();
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.monthText,
+                          isFuture && { color: "#999" },
+                        ]}
+                      >
+                        {item}월
+                      </Text>
+                    </Pressable>
+                  );
+                }}
               />
             </View>
           </TouchableWithoutFeedback>
