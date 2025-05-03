@@ -1,14 +1,18 @@
+import { Ionicons } from "@expo/vector-icons";
 import dayjs from "dayjs";
-import React from "react";
-import { Image, StyleSheet, Text, View } from "react-native";
+import React, { useState } from "react";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import MonthYearPicker from "../components/MonthYearPicker";
 
-const Calendar = () => {
-  const now = dayjs();
-  const year = now.year();
-  const month = now.month() + 1; // 1~12
+export default function Calendar() {
+  const [currentDate, setCurrentDate] = useState(dayjs());
+  const [showPicker, setShowPicker] = useState(false);
 
-  const startDay = dayjs(`${year}-${month}-01`).day(); // 0~6
-  const daysInMonth = dayjs(`${year}-${month}`).daysInMonth();
+  const year = currentDate.year();
+  const month = currentDate.month() + 1;
+
+  const startDay = currentDate.startOf("month").day();
+  const daysInMonth = currentDate.daysInMonth();
 
   const dates = Array.from({ length: startDay + daysInMonth }, (_, i) => {
     if (i < startDay) return null;
@@ -17,7 +21,22 @@ const Calendar = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{`${year}년 ${month}월`}</Text>
+      <View style={styles.header}>
+        <Pressable
+          onPress={() => setShowPicker(true)}
+          style={{ flexDirection: "row", alignItems: "center" }}
+        >
+          <Text style={styles.title}>{`${year}년 ${month}월`}</Text>
+          <Ionicons
+            name="chevron-down"
+            size={16}
+            color="#63411F"
+            style={{ marginLeft: 4 }}
+          />
+        </Pressable>
+      </View>
+
+      {/* 요일 헤더 */}
       <View style={styles.dayHeader}>
         {["일", "월", "화", "수", "목", "금", "토"].map((d) => (
           <Text style={styles.dayLabel} key={d}>
@@ -25,6 +44,8 @@ const Calendar = () => {
           </Text>
         ))}
       </View>
+
+      {/* 날짜 그리드 */}
       <View style={styles.grid}>
         {dates.map((date, index) => (
           <View key={index} style={styles.cell}>
@@ -42,11 +63,22 @@ const Calendar = () => {
           </View>
         ))}
       </View>
+
+      {/* 연/월 선택 모달 */}
+      <MonthYearPicker
+        visible={showPicker}
+        onClose={() => setShowPicker(false)}
+        initialYear={year}
+        onSelect={(selectedYear, selectedMonth) => {
+          const newDate = dayjs()
+            .year(selectedYear)
+            .month(selectedMonth - 1);
+          setCurrentDate(newDate);
+        }}
+      />
     </View>
   );
-};
-
-export default Calendar;
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -56,9 +88,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#FFF7E0",
   },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 30,
+  },
   title: {
     fontSize: 20,
-    marginBottom: 40,
+    alignItems: "center",
     fontFamily: "Cafe24Dongdong",
   },
   dayHeader: {
