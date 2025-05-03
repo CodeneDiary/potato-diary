@@ -1,9 +1,8 @@
-// components/PotatoCalendar.tsx
 import dayjs from "dayjs";
 import React from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 
-const calendar = () => {
+const Calendar = () => {
   const now = dayjs();
   const year = now.year();
   const month = now.month() + 1; // 1~12
@@ -47,12 +46,12 @@ const calendar = () => {
   );
 };
 
-export default calendar;
+export default Calendar;
 
 const styles = StyleSheet.create({
   container: {
     width: 330,
-    paddingTop: 40,
+    paddingTop: 20,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#FFF7E0",
@@ -60,17 +59,20 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     marginBottom: 40,
+    fontFamily: "Cafe24Dongdong",
   },
   dayHeader: {
     flexDirection: "row",
     width: "100%",
     justifyContent: "space-around",
-    marginBottom: 15,
+    marginBottom: 10,
   },
   dayLabel: {
     width: "14.28%",
     textAlign: "center",
     fontWeight: "bold",
+    fontFamily: "Cafe24Dongdong",
+    fontSize: 18,
   },
   grid: {
     flexDirection: "row",
@@ -85,9 +87,10 @@ const styles = StyleSheet.create({
     marginVertical: 6,
   },
   dateText: {
-    fontSize: 14,
+    fontSize: 15,
     marginBottom: 2,
     height: 24,
+    fontFamily: "Cafe24Dongdong",
   },
   potato: {
     width: 40,
