@@ -1,3 +1,4 @@
+// app/view/[date].tsx
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import dayjs from "dayjs";
@@ -5,6 +6,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Alert,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,31 +14,77 @@ import {
   View,
 } from "react-native";
 
+// ✅ 목업 데이터
+const mockDiaries: Record<string, { emotion: string; content: string }> = {
+  "2025-05-20": {
+    emotion: "기쁨",
+    content: "오늘은 날씨도 좋고 기분도 좋은 하루였다! ☀️",
+  },
+  "2025-05-21": {
+    emotion: "슬픔",
+    content: "비가 와서 그런지 기분이 조금 가라앉았다... 🌧️",
+  },
+};
+
+const emotionImages: Record<string, any> = {
+  기쁨: require("../../assets/images/emotion-happy.png"),
+  슬픔: require("../../assets/images/emotion-sad.png"),
+  평온: require("../../assets/images/emotion-calm.png"),
+  무감정: require("../../assets/images/emotion-neutral.png"),
+};
+
 export default function ViewDiaryPage() {
   const { date } = useLocalSearchParams();
   const router = useRouter();
-  const [diary, setDiary] = useState<string | null>(null);
+  const [diary, setDiary] = useState<{
+    emotion: string;
+    content: string;
+  } | null>(null);
 
   useEffect(() => {
     const loadDiary = async () => {
-      try {
-        const saved = await AsyncStorage.getItem(`diary-${date}`);
-        if (saved) {
-          setDiary(saved);
-        } else {
-          Alert.alert("일기 없음", "작성된 일기가 없습니다.", [
-            {
-              text: "작성하러 가기",
-              onPress: () => router.replace(`/write/${date}`),
-            },
-          ]);
+      const saved = await AsyncStorage.getItem(`diary-${date}`);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          setDiary(parsed);
+        } catch (e) {
+          setDiary({ emotion: "무감정", content: saved });
         }
-      } catch (e) {
-        Alert.alert("오류", "일기를 불러오는 중 문제가 발생했습니다.");
+      } else {
+        setDiary(mockDiaries[date as string] || null);
       }
     };
     loadDiary();
   }, [date]);
+
+  const handleDelete = () => {
+    Alert.alert("일기 삭제", "정말 삭제하시겠습니까?", [
+      {
+        text: "취소",
+        style: "cancel",
+      },
+      {
+        text: "삭제",
+        style: "destructive",
+        onPress: async () => {
+          await AsyncStorage.removeItem(`diary-${date}`);
+          router.replace("/");
+        },
+      },
+    ]);
+  };
+
+  const handleEdit = () => {
+    if (!diary) return;
+    router.push({
+      pathname: "/write/[date]",
+      params: {
+        date: date as string,
+        initial: JSON.stringify(diary),
+      },
+    });
+  };
 
   return (
     <View style={styles.container}>
@@ -51,11 +99,31 @@ export default function ViewDiaryPage() {
         <Text style={styles.date}>
           {dayjs(date as string).format("M월 D일")}
         </Text>
+        {diary && (
+          <Image
+            source={emotionImages[diary.emotion]}
+            style={styles.emotionImage}
+          />
+        )}
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.diaryText}>{diary}</Text>
-      </ScrollView>
+      {diary ? (
+        <View style={styles.diarySection}>
+          <ScrollView style={styles.scrollBox}>
+            <Text style={styles.diaryText}>{diary.content}</Text>
+          </ScrollView>
+          <View style={styles.actionIcons}>
+            <Pressable onPress={handleEdit}>
+              <Ionicons name="create-outline" size={26} color="#63411F" />
+            </Pressable>
+            <Pressable onPress={handleDelete} style={{ marginLeft: 24 }}>
+              <Ionicons name="trash-outline" size={26} color="#63411F" />
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <Text style={styles.diaryText}>작성된 일기가 없습니다.</Text>
+      )}
     </View>
   );
 }
@@ -64,11 +132,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFF7E0",
+    alignItems: "center",
   },
   header: {
     flexDirection: "row",
     justifyContent: "flex-start",
     alignItems: "center",
+    width: "100%",
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 20,
@@ -78,18 +148,37 @@ const styles = StyleSheet.create({
   },
   date: {
     fontSize: 22,
-    marginBottom: 20,
+    marginBottom: 10,
     fontFamily: "Cafe24Dongdong",
     color: "#63411F",
   },
-  content: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+  emotionImage: {
+    width: 60,
+    height: 60,
+    marginBottom: 20,
+    marginTop: 10,
+  },
+  diarySection: {
+    width: 330,
+    height: 400,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    padding: 20,
+    justifyContent: "space-between",
+  },
+  scrollBox: {
+    flexGrow: 1,
   },
   diaryText: {
     fontSize: 18,
     color: "#333",
     fontFamily: "Cafe24Dongdong",
     lineHeight: 28,
+  },
+  actionIcons: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginTop: 10,
+    marginRight: 5,
   },
 });

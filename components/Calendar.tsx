@@ -1,10 +1,25 @@
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import dayjs from "dayjs";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import MonthYearPicker from "../components/MonthYearPicker";
+
+// ✅ 감정별 이미지 매핑 (목업)
+const emotionImages: Record<string, any> = {
+  happy: require("../assets/images/emotion-happy.png"),
+  sad: require("../assets/images/emotion-sad.png"),
+  calm: require("../assets/images/emotion-calm.png"),
+  neutral: require("../assets/images/emotion-neutral.png"),
+  angry: require("../assets/images/emotion-angry.png"),
+};
+
+// ✅ 감정 포함된 목업 데이터
+const mockDiaries: Record<string, { emotion: string }> = {
+  "2025-05-20": { emotion: "happy" },
+  "2025-05-21": { emotion: "sad" },
+  "2025-05-11": { emotion: "neutral" },
+};
 
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(dayjs());
@@ -29,15 +44,11 @@ export default function Calendar() {
       .date(date)
       .format("YYYY-MM-DD");
 
-    try {
-      const diary = await AsyncStorage.getItem(`diary-${dateKey}`);
-      if (diary) {
-        router.push(`/view/${dateKey}`);
-      } else {
-        router.push(`/write/${dateKey}`);
-      }
-    } catch (e) {
-      console.error("Storage error:", e);
+    const diary = mockDiaries[dateKey];
+    if (diary) {
+      router.push(`/view/${dateKey}`);
+    } else {
+      router.push(`/write/${dateKey}`);
     }
   };
 
@@ -69,21 +80,31 @@ export default function Calendar() {
 
       {/* 날짜 그리드 */}
       <View style={styles.grid}>
-        {dates.map((date, index) => (
-          <View key={index} style={styles.cell}>
-            {date ? (
-              <Pressable onPress={() => onPressDate(date)}>
-                <Text style={styles.dateText}>{date}</Text>
-                <Image
-                  source={require("../assets/images/day.png")}
-                  style={styles.potato}
-                />
-              </Pressable>
-            ) : (
-              <View style={styles.empty} />
-            )}
-          </View>
-        ))}
+        {dates.map((date, index) => {
+          const dateKey = dayjs()
+            .year(year)
+            .month(month - 1)
+            .date(date ?? 0)
+            .format("YYYY-MM-DD");
+          const diary = mockDiaries[dateKey];
+          const emotion = diary?.emotion;
+          const imageSource = emotion
+            ? emotionImages[emotion]
+            : require("../assets/images/day.png");
+
+          return (
+            <View key={index} style={styles.cell}>
+              {date ? (
+                <Pressable onPress={() => onPressDate(date)}>
+                  <Text style={styles.dateText}>{date}</Text>
+                  <Image source={imageSource} style={styles.potato} />
+                </Pressable>
+              ) : (
+                <View style={styles.empty} />
+              )}
+            </View>
+          );
+        })}
       </View>
 
       {/* 연/월 선택 모달 */}
