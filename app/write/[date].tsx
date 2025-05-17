@@ -164,6 +164,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     marginBottom: 20,
     fontFamily: "Cafe24Dongdong",
+    color: "#63411F",
   },
   emotionWrapper: {
     alignItems: "center",

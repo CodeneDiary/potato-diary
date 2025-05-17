@@ -180,6 +180,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     marginBottom: 10,
     fontFamily: "Cafe24Dongdong",
+    color: "#63411F",
   },
   emotionImage: {
     width: 60,
@@ -190,7 +191,7 @@ const styles = StyleSheet.create({
   diarySection: {
     width: 330,
     height: 360,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#F5E3B3",
     borderRadius: 10,
     padding: 16,
     fontSize: 18,
