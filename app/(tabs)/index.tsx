@@ -49,8 +49,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     width: 330,
-    position: "absolute",
-    bottom: 40,
+    top: 50,
     flexDirection: "row",
     justifyContent: "flex-end",
     alignItems: "center",

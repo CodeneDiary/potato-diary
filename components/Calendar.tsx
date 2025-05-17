@@ -108,9 +108,8 @@ const styles = StyleSheet.create({
   dayLabel: {
     width: "14.28%",
     textAlign: "center",
-    fontWeight: "bold",
     fontFamily: "Cafe24Dongdong",
-    fontSize: 18,
+    fontSize: 22,
   },
   grid: {
     flexDirection: "row",
