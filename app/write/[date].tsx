@@ -1,32 +1,58 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import dayjs from "dayjs";
-import { useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import {
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
 export default function WritePage() {
   const router = useRouter();
-  const today = dayjs().format(" M월 D일");
+  const { date } = useLocalSearchParams(); // YYYY-MM-DD
+  const [text, setText] = useState("");
+
+  useEffect(() => {
+    const loadDiary = async () => {
+      const existing = await AsyncStorage.getItem(`diary-${date}`);
+      if (existing) setText(existing);
+    };
+    loadDiary();
+  }, [date]);
+
+  const handleSave = async () => {
+    try {
+      await AsyncStorage.setItem(`diary-${date}`, text);
+      Alert.alert("저장 완료", `${date} 일기가 저장되었습니다.`);
+      router.back();
+    } catch (e) {
+      Alert.alert("오류", "일기를 저장하는 중 문제가 발생했습니다.");
+    }
+  };
 
   return (
     <View style={styles.container}>
       {/* 상단 헤더 */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()}>
-          <Ionicons name="close" size={28} />
+          <Ionicons name="close" size={28} color="#63411F" />
         </Pressable>
-        <Pressable
-          onPress={() => {
-            // 저장 로직 추가 예정
-            console.log("저장!");
-            router.back(); // 저장 후 뒤로
-          }}
-        >
-          <Ionicons name="checkmark" size={28} />
+        <Pressable onPress={handleSave}>
+          <Ionicons name="checkmark" size={28} color="#63411F" />
         </Pressable>
       </View>
+
       <View style={styles.dateContainer}>
-        <Text style={styles.date}>{today}</Text>
+        <Text style={styles.date}>
+          {dayjs(date as string).format("M월 D일")}
+        </Text>
       </View>
+
       {/* 본문 영역 */}
       <View style={styles.content}>
         <TextInput
@@ -34,6 +60,8 @@ export default function WritePage() {
           multiline
           placeholder="오늘의 하루를 기록해보세요"
           textAlignVertical="top"
+          value={text}
+          onChangeText={setText}
         />
       </View>
     </View>
@@ -60,6 +88,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     marginBottom: 20,
     fontFamily: "Cafe24Dongdong",
+    color: "#63411F",
   },
   content: {
     flex: 1,

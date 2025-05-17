@@ -1,5 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import dayjs from "dayjs";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import MonthYearPicker from "../components/MonthYearPicker";
@@ -7,6 +9,7 @@ import MonthYearPicker from "../components/MonthYearPicker";
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(dayjs());
   const [showPicker, setShowPicker] = useState(false);
+  const router = useRouter();
 
   const year = currentDate.year();
   const month = currentDate.month() + 1;
@@ -18,6 +21,25 @@ export default function Calendar() {
     if (i < startDay) return null;
     return i - startDay + 1;
   });
+
+  const onPressDate = async (date: number) => {
+    const dateKey = dayjs()
+      .year(year)
+      .month(month - 1)
+      .date(date)
+      .format("YYYY-MM-DD");
+
+    try {
+      const diary = await AsyncStorage.getItem(`diary-${dateKey}`);
+      if (diary) {
+        router.push(`/view/${dateKey}`);
+      } else {
+        router.push(`/write/${dateKey}`);
+      }
+    } catch (e) {
+      console.error("Storage error:", e);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -50,13 +72,13 @@ export default function Calendar() {
         {dates.map((date, index) => (
           <View key={index} style={styles.cell}>
             {date ? (
-              <>
+              <Pressable onPress={() => onPressDate(date)}>
                 <Text style={styles.dateText}>{date}</Text>
                 <Image
                   source={require("../assets/images/day.png")}
                   style={styles.potato}
                 />
-              </>
+              </Pressable>
             ) : (
               <View style={styles.empty} />
             )}
@@ -128,6 +150,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
     height: 24,
     fontFamily: "Cafe24Dongdong",
+    textAlign: "center",
   },
   potato: {
     width: 40,

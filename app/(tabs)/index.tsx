@@ -1,10 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
+import dayjs from "dayjs";
 import { useRouter } from "expo-router";
 import { Pressable, StyleSheet, View } from "react-native";
 import Calendar from "../../components/Calendar";
 
 export default function CalendarPage() {
   const router = useRouter();
+
+  const goToTodayWrite = () => {
+    const today = dayjs().format("YYYY-MM-DD");
+    router.push(`/write/${today}`);
+  };
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -22,7 +28,7 @@ export default function CalendarPage() {
       </View>
       <Calendar />
       <View style={styles.buttonContainer}>
-        <Pressable style={styles.fab} onPress={() => router.push("/write")}>
+        <Pressable style={styles.fab} onPress={goToTodayWrite}>
           <Ionicons name="add" size={32} color="#FFF" />
         </Pressable>
       </View>
