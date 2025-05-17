@@ -17,20 +17,21 @@ import {
 // ✅ 목업 데이터
 const mockDiaries: Record<string, { emotion: string; content: string }> = {
   "2025-05-20": {
-    emotion: "기쁨",
+    emotion: "happy",
     content: "오늘은 날씨도 좋고 기분도 좋은 하루였다! ☀️",
   },
   "2025-05-21": {
-    emotion: "슬픔",
+    emotion: "sad",
     content: "비가 와서 그런지 기분이 조금 가라앉았다... 🌧️",
   },
 };
 
 const emotionImages: Record<string, any> = {
-  기쁨: require("../../assets/images/emotion-happy.png"),
-  슬픔: require("../../assets/images/emotion-sad.png"),
-  평온: require("../../assets/images/emotion-calm.png"),
-  무감정: require("../../assets/images/emotion-neutral.png"),
+  happy: require("../../assets/images/emotion-happy.png"),
+  sad: require("../../assets/images/emotion-sad.png"),
+  calm: require("../../assets/images/emotion-calm.png"),
+  angry: require("../../assets/images/emotion-angry.png"),
+  neutral: require("../../assets/images/emotion-neutral.png"),
 };
 
 export default function ViewDiaryPage() {
@@ -108,10 +109,12 @@ export default function ViewDiaryPage() {
       </View>
 
       {diary ? (
-        <View style={styles.diarySection}>
-          <ScrollView style={styles.scrollBox}>
-            <Text style={styles.diaryText}>{diary.content}</Text>
-          </ScrollView>
+        <View>
+          <View style={styles.diarySection}>
+            <ScrollView style={styles.scrollBox}>
+              <Text style={styles.diaryText}>{diary.content}</Text>
+            </ScrollView>
+          </View>
           <View style={styles.actionIcons}>
             <Pressable onPress={handleEdit}>
               <Ionicons name="create-outline" size={26} color="#63411F" />
@@ -124,6 +127,33 @@ export default function ViewDiaryPage() {
       ) : (
         <Text style={styles.diaryText}>작성된 일기가 없습니다.</Text>
       )}
+      <View style={styles.extraButtons}>
+        <Pressable
+          style={styles.extraButton}
+          onPress={() => router.push("/recommend")}
+        >
+          <Ionicons
+            name="sparkles-outline"
+            size={20}
+            color="#63411F"
+            style={styles.icon}
+          />
+          <Text style={styles.extraButtonText}>추천 콘텐츠</Text>
+        </Pressable>
+
+        <Pressable
+          style={[styles.extraButton, { marginLeft: 12 }]}
+          onPress={() => router.push("/chatbot")}
+        >
+          <Ionicons
+            name="chatbubble-ellipses-outline"
+            size={20}
+            color="#63411F"
+            style={styles.icon}
+          />
+          <Text style={styles.extraButtonText}>감정 챗봇</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -150,7 +180,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     marginBottom: 10,
     fontFamily: "Cafe24Dongdong",
-    color: "#63411F",
   },
   emotionImage: {
     width: 60,
@@ -160,11 +189,13 @@ const styles = StyleSheet.create({
   },
   diarySection: {
     width: 330,
-    height: 400,
+    height: 360,
     backgroundColor: "#FFFFFF",
     borderRadius: 10,
-    padding: 20,
-    justifyContent: "space-between",
+    padding: 16,
+    fontSize: 18,
+    color: "#333",
+    fontFamily: "Cafe24Dongdong",
   },
   scrollBox: {
     flexGrow: 1,
@@ -180,5 +211,32 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     marginTop: 10,
     marginRight: 5,
+  },
+  extraButtons: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: 20,
+    paddingHorizontal: 20,
+  },
+  extraButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F5E3B3",
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    width: 160,
+    height: 60,
+    justifyContent: "center",
+  },
+  extraButtonText: {
+    fontSize: 18,
+    color: "#63411F",
+    fontFamily: "Cafe24Dongdong",
+    marginLeft: 6,
+    textAlign: "center",
+  },
+  icon: {
+    marginRight: 4,
   },
 });

@@ -218,12 +218,13 @@ const styles = StyleSheet.create({
   },
   inputBox: {
     width: 330,
-    minHeight: 370,
+    height: 360,
     backgroundColor: "#FFFFFF",
     borderRadius: 10,
     padding: 16,
     fontSize: 18,
     color: "#333",
     fontFamily: "Cafe24Dongdong",
+    lineHeight: 24,
   },
 });
