@@ -6,7 +6,6 @@ import { Tabs } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useCallback, useEffect, useState } from "react";
 import { View } from "react-native";
-
 SplashScreen.preventAutoHideAsync();
 
 export default function Layout() {

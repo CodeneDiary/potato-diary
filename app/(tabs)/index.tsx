@@ -2,11 +2,28 @@
 import Calendar from "@/components/Calendar";
 import DiaryList from "@/components/DiaryList";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import dayjs from "dayjs";
+import { useRouter } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
 export default function CalendarPage() {
+  const router = useRouter();
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
+  const viewModeRef = useRef<"calendar" | "list">("calendar");
+
+  useEffect(() => {
+    viewModeRef.current = viewMode;
+  }, [viewMode]);
+
+  useEffect(() => {
+    setViewMode(viewModeRef.current);
+  }, []);
+
+  const goToTodayWrite = () => {
+    const today = dayjs().format("YYYY-MM-DD");
+    router.push(`/write/${today}`);
+  };
 
   return (
     <View style={styles.container}>
@@ -18,7 +35,7 @@ export default function CalendarPage() {
           </Pressable>
           <Pressable
             onPress={() =>
-              setViewMode((prev) => (prev === "calendar" ? "list" : "calendar"))
+              setViewMode(viewMode === "calendar" ? "list" : "calendar")
             }
             style={{ marginLeft: 20 }}
           >
@@ -30,9 +47,13 @@ export default function CalendarPage() {
           </Pressable>
         </View>
       </View>
-
       {/* 메인 화면 */}
       {viewMode === "calendar" ? <Calendar /> : <DiaryList />}
+      <View style={styles.buttonContainer}>
+        <Pressable style={styles.fab} onPress={goToTodayWrite}>
+          <Ionicons name="add" size={32} color="#FFF" />
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -52,5 +73,18 @@ const styles = StyleSheet.create({
   },
   iconGroup: {
     flexDirection: "row",
+  },
+  buttonContainer: {
+    position: "absolute",
+    bottom: 40,
+    right: 20,
+  },
+  fab: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#63411F",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
