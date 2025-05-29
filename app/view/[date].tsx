@@ -14,18 +14,6 @@ import {
   View,
 } from "react-native";
 
-// ✅ 목업 데이터
-const mockDiaries: Record<string, { emotion: string; content: string }> = {
-  "2025-05-20": {
-    emotion: "happy",
-    content: "오늘은 날씨도 좋고 기분도 좋은 하루였다! ☀️",
-  },
-  "2025-05-21": {
-    emotion: "sad",
-    content: "비가 와서 그런지 기분이 조금 가라앉았다... 🌧️",
-  },
-};
-
 const emotionImages: Record<string, any> = {
   happy: require("../../assets/images/emotion-happy.png"),
   sad: require("../../assets/images/emotion-sad.png"),
@@ -44,16 +32,38 @@ export default function ViewDiaryPage() {
 
   useEffect(() => {
     const loadDiary = async () => {
-      const saved = await AsyncStorage.getItem(`diary-${date}`);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          setDiary(parsed);
-        } catch (e) {
-          setDiary({ emotion: "무감정", content: saved });
+      try {
+        const response = await fetch(
+          "https://gamja-friend.onrender.com/diary/list",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer dev-token",
+            },
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          const diaryEntry = data.find((entry: any) => {
+            const entryDate = dayjs(entry.created_at).format("YYYY-MM-DD");
+            return entryDate === date;
+          });
+          if (diaryEntry) {
+            setDiary({
+              emotion: diaryEntry.emotion.toLowerCase(),
+              content: diaryEntry.content,
+            });
+          } else {
+            setDiary(null);
+          }
+        } else {
+          console.error("서버에서 일기 데이터를 가져오지 못했습니다.");
+          setDiary(null);
         }
-      } else {
-        setDiary(mockDiaries[date as string] || null);
+      } catch (error) {
+        console.error("일기 데이터 요청 중 오류 발생", error);
+        setDiary(null);
       }
     };
     loadDiary();

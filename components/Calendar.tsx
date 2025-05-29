@@ -1,11 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import dayjs from "dayjs";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import MonthYearPicker from "../components/MonthYearPicker";
 
-// ✅ 감정별 이미지 매핑 (목업)
+// ✅ 감정별 이미지 매핑
 const emotionImages: Record<string, any> = {
   happy: require("../assets/images/emotion-happy.png"),
   sad: require("../assets/images/emotion-sad.png"),
@@ -14,17 +14,47 @@ const emotionImages: Record<string, any> = {
   angry: require("../assets/images/emotion-angry.png"),
 };
 
-// ✅ 감정 포함된 목업 데이터
-const mockDiaries: Record<string, { emotion: string }> = {
-  "2025-05-20": { emotion: "happy" },
-  "2025-05-21": { emotion: "sad" },
-  "2025-05-11": { emotion: "neutral" },
-};
-
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(dayjs());
   const [showPicker, setShowPicker] = useState(false);
+  const [fetchedDiaries, setFetchedDiaries] = useState<
+    Record<string, { emotion: string }>
+  >({});
   const router = useRouter();
+
+  useEffect(() => {
+    const fetchDiaries = async () => {
+      try {
+        const response = await fetch(
+          "https://gamja-friend.onrender.com/diary/list",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              // Authorization 헤더 추가 (JWT 토큰 등 필요 시)
+              Authorization: "Bearer dev-token",
+            },
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          // data 배열 -> { "YYYY-MM-DD": { emotion: "happy" } } 형태로 변환
+          const diariesByDate: Record<string, { emotion: string }> = {};
+          data.forEach((entry: any) => {
+            const dateKey = dayjs(entry.created_at).format("YYYY-MM-DD"); // created_at 필드를 사용하거나 entry.date 등으로 수정
+            diariesByDate[dateKey] = { emotion: entry.emotion.toLowerCase() };
+          });
+          setFetchedDiaries(diariesByDate);
+        } else {
+          console.error("일기 목록 불러오기 실패");
+        }
+      } catch (error) {
+        console.error("일기 목록 요청 중 오류 발생", error);
+      }
+    };
+
+    fetchDiaries();
+  }, []);
 
   const year = currentDate.year();
   const month = currentDate.month() + 1;
@@ -44,7 +74,7 @@ export default function Calendar() {
       .date(date)
       .format("YYYY-MM-DD");
 
-    const diary = mockDiaries[dateKey];
+    const diary = fetchedDiaries[dateKey];
     if (diary) {
       router.push(`/view/${dateKey}`);
     } else {
@@ -86,7 +116,7 @@ export default function Calendar() {
             .month(month - 1)
             .date(date ?? 0)
             .format("YYYY-MM-DD");
-          const diary = mockDiaries[dateKey];
+          const diary = fetchedDiaries[dateKey];
           const emotion = diary?.emotion;
           const imageSource = emotion
             ? emotionImages[emotion]

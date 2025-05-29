@@ -1,6 +1,5 @@
 // app/write/[date].tsx
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import dayjs from "dayjs";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -55,15 +54,34 @@ export default function WritePage() {
 
   const handleSave = async () => {
     try {
-      const diaryData = {
-        content: text,
-        emotion: emotion,
-      };
-      await AsyncStorage.setItem(`diary-${date}`, JSON.stringify(diaryData));
-      Alert.alert("저장 완료", `${date} 일기가 저장되었습니다.`);
-      router.back();
+      const response = await fetch(
+        "https://gamja-friend.onrender.com/diary/text",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer dev-token",
+          },
+          body: JSON.stringify({ text }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        Alert.alert(
+          "저장 완료",
+          `일기 저장 성공!\n감정: ${data.diary.emotion}`
+        );
+        router.back();
+      } else {
+        const errorData = await response.json();
+        Alert.alert(
+          "오류",
+          errorData.message || "일기를 저장하는 중 오류 발생"
+        );
+      }
     } catch (e) {
-      Alert.alert("오류", "일기를 저장하는 중 문제가 발생했습니다.");
+      Alert.alert("오류", "서버에 연결할 수 없습니다.");
     }
   };
 

@@ -2,6 +2,7 @@
 import Calendar from "@/components/Calendar";
 import DiaryList from "@/components/DiaryList";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import dayjs from "dayjs";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -20,9 +21,23 @@ export default function CalendarPage() {
     setViewMode(viewModeRef.current);
   }, []);
 
-  const goToTodayWrite = () => {
+  const goToTodayWrite = async () => {
     const today = dayjs().format("YYYY-MM-DD");
-    router.push(`/write/${today}`);
+
+    try {
+      const existingDiary = await AsyncStorage.getItem(`diary_${today}`);
+      if (existingDiary) {
+        // 이미 일기가 있으면 일기 확인 페이지로 이동
+        router.push({ pathname: "/view/[date]", params: { date: today } });
+      } else {
+        // 없으면 일기 작성 페이지로 이동
+        router.push(`/write/${today}`);
+      }
+    } catch (error) {
+      console.error("일기 확인 중 오류:", error);
+      // 오류 시 기본적으로 작성 페이지로 이동
+      router.push(`/write/${today}`);
+    }
   };
 
   return (
