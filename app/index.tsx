@@ -46,7 +46,7 @@ export default function LoginPage() {
 
   const handleSignUp = () => {
     console.log("회원가입 버튼 클릭");
-    router.replace("/signup");
+    router.push("/signup");
   };
 
   if (isLoading) {
@@ -95,6 +95,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 20,
+    backgroundColor: "#FFF7E0",
   },
   title: {
     fontSize: 24,

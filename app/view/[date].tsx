@@ -80,7 +80,7 @@ export default function ViewDiaryPage() {
         style: "destructive",
         onPress: async () => {
           await AsyncStorage.removeItem(`diary-${date}`);
-          router.replace("/calendar");
+          router.push("/calendar");
         },
       },
     ]);

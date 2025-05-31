@@ -1,23 +1,39 @@
-// app/_layout.tsx
-import { Slot } from "expo-router";
-import { StatusBar } from "expo-status-bar";
-import { StyleSheet, View } from "react-native";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import AppLoading from "expo-app-loading"; // expo-app-loading 설치 필요
+import { Asset } from "expo-asset";
+import * as Font from "expo-font";
+import { Stack } from "expo-router";
+import React, { useState } from "react";
 
 export default function RootLayout() {
-  return (
-    <SafeAreaProvider>
-      <View style={styles.container}>
-        <StatusBar style="dark" backgroundColor="#FFF7E0" />
-        <Slot />
-      </View>
-    </SafeAreaProvider>
-  );
-}
+  const [isReady, setIsReady] = useState(false);
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFF7E0", // ✅ 앱 전체 배경 색
-  },
-});
+  const loadAssets = async () => {
+    // 폰트 로드
+    await Font.loadAsync({
+      Cafe24Dongdong: require("@/assets/fonts/Cafe24Dongdong.ttf"),
+      // 추가 폰트 있으면 여기에
+    });
+
+    // 이미지 캐싱 (예: 감자 이미지)
+    await Asset.loadAsync([
+      require("@/assets/images/emotion-happy.png"),
+      require("@/assets/images/emotion-calm.png"),
+      require("@/assets/images/emotion-sad.png"),
+      require("@/assets/images/emotion-angry.png"),
+      require("@/assets/images/emotion-neutral.png"),
+      require("@/assets/images/day.png"),
+    ]);
+  };
+
+  if (!isReady) {
+    return (
+      <AppLoading
+        startAsync={loadAssets}
+        onFinish={() => setIsReady(true)}
+        onError={console.warn}
+      />
+    );
+  }
+
+  return <Stack screenOptions={{ headerShown: false }} />;
+}
