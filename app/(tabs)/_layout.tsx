@@ -1,4 +1,3 @@
-// app/_layout.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { Asset } from "expo-asset";
 import { useFonts } from "expo-font";
@@ -60,7 +59,7 @@ export default function Layout() {
         }}
       >
         <Tabs.Screen
-          name="index"
+          name="calendar"
           options={{
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="calendar-outline" size={size} color={color} />

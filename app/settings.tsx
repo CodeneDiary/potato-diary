@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Alert, Pressable, StyleSheet, Switch, Text, View } from "react-native";
@@ -15,7 +16,16 @@ export default function SettingsPage() {
       { text: "확인", onPress: () => console.log("로그아웃 로직 실행") },
     ]);
   };
-
+  const handleClearToken = async () => {
+    try {
+      await AsyncStorage.removeItem("jwtToken");
+      console.log("토큰 삭제 완료");
+      Alert.alert("완료", "토큰이 삭제되었습니다.");
+    } catch (error) {
+      console.error("토큰 삭제 오류:", error);
+      Alert.alert("오류", "토큰 삭제 중 오류가 발생했습니다.");
+    }
+  };
   const handleWithdraw = () => {
     Alert.alert("회원 탈퇴", "정말로 탈퇴하시겠어요?", [
       { text: "취소", style: "cancel" },
@@ -43,12 +53,15 @@ export default function SettingsPage() {
           />
         </View>
 
-        <Pressable style={styles.itemRow} onPress={handleLogout}>
+        <Pressable style={styles.itemRow} onPress={handleClearToken}>
           <Text style={styles.itemText}>로그아웃</Text>
         </Pressable>
 
         <Pressable style={styles.itemRow} onPress={handleWithdraw}>
           <Text style={styles.itemText}>회원 탈퇴</Text>
+        </Pressable>
+        <Pressable style={styles.itemRow} onPress={() => router.push("/")}>
+          <Text style={styles.itemText}>로그인</Text>
         </Pressable>
       </View>
     </View>
