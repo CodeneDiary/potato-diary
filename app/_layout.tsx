@@ -1,39 +1,60 @@
-import AppLoading from "expo-app-loading"; // expo-app-loading 설치 필요
 import { Asset } from "expo-asset";
 import * as Font from "expo-font";
 import { Stack } from "expo-router";
-import React, { useState } from "react";
+import * as SplashScreen from "expo-splash-screen";
+import { useCallback, useEffect, useState } from "react";
+import { StyleSheet, View } from "react-native";
+
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
 
-  const loadAssets = async () => {
-    // 폰트 로드
-    await Font.loadAsync({
-      Cafe24Dongdong: require("@/assets/fonts/Cafe24Dongdong.ttf"),
-      // 추가 폰트 있으면 여기에
-    });
+  useEffect(() => {
+    async function loadAssets() {
+      try {
+        await Font.loadAsync({
+          Cafe24Dongdong: require("@/assets/fonts/Cafe24Dongdong.ttf"),
+          // 추가 폰트
+        });
+        await Asset.loadAsync([
+          require("@/assets/images/emotion-happy.png"),
+          require("@/assets/images/emotion-calm.png"),
+          require("@/assets/images/emotion-sad.png"),
+          require("@/assets/images/emotion-angry.png"),
+          require("@/assets/images/emotion-neutral.png"),
+          require("@/assets/images/day.png"),
+        ]);
+      } catch (e) {
+        console.warn("자산 로드 오류:", e);
+      } finally {
+        setIsReady(true);
+      }
+    }
 
-    // 이미지 캐싱 (예: 감자 이미지)
-    await Asset.loadAsync([
-      require("@/assets/images/emotion-happy.png"),
-      require("@/assets/images/emotion-calm.png"),
-      require("@/assets/images/emotion-sad.png"),
-      require("@/assets/images/emotion-angry.png"),
-      require("@/assets/images/emotion-neutral.png"),
-      require("@/assets/images/day.png"),
-    ]);
-  };
+    loadAssets();
+  }, []);
+
+  const onLayoutRootView = useCallback(async () => {
+    if (isReady) {
+      await SplashScreen.hideAsync();
+    }
+  }, [isReady]);
 
   if (!isReady) {
-    return (
-      <AppLoading
-        startAsync={loadAssets}
-        onFinish={() => setIsReady(true)}
-        onError={console.warn}
-      />
-    );
+    return null; // 로딩 중 화면 숨김
   }
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <View style={styles.container} onLayout={onLayoutRootView}>
+      <Stack screenOptions={{ headerShown: false }} />
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#FFF7E0",
+  },
+});

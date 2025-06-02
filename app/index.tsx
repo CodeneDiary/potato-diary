@@ -1,6 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import React, { useEffect, useState } from "react";
+import { getFirebaseAuth } from "../config/firebaseConfig";
+
 import {
   ActivityIndicator,
   Image,
@@ -16,6 +19,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const fireBaseAuth = getFirebaseAuth();
 
   useEffect(() => {
     checkLogin();
@@ -36,11 +40,42 @@ export default function LoginPage() {
 
   const handleLogin = async () => {
     try {
-      // TODO: 백엔드 인증 연동
-      await AsyncStorage.setItem("jwtToken", "dev-token");
+      console.log("로그인 시도 중 - 이메일:", email, "비밀번호:", password);
+      const userCredential = await signInWithEmailAndPassword(
+        fireBaseAuth,
+        email,
+        password
+      );
+      const idToken = await userCredential.user.getIdToken();
+      console.log("로그인 성공, idToken:", idToken);
+
+      await AsyncStorage.setItem("jwtToken", idToken);
+      console.log("idToken 저장 완료");
+
+      const response = await fetch(
+        "https://gamja-friend.onrender.com/user/profile",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      const responseData = await response.json();
+      console.log("백엔드 응답:", responseData);
+
       router.replace("/(tabs)/calendar");
     } catch (error) {
-      console.error("로그인 처리 오류:", error);
+      if (error instanceof Error) {
+        console.error("로그인 오류:", error.message);
+        alert("로그인 실패. " + error.message);
+      } else {
+        console.error("로그인 오류: 알 수 없는 오류", error);
+        alert("로그인 실패. 알 수 없는 오류");
+      }
     }
   };
 

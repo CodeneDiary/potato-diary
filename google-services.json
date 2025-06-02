@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "246243944057",
+    "project_id": "gamja-friend",
+    "storage_bucket": "gamja-friend.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:246243944057:android:e73416b32f4547089b16a8",
+        "android_client_info": {
+          "package_name": "com.codene.potatodiary"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDTtucJ4kdM-In1QWd3P-mIYesc_lkIbew"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

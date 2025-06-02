@@ -1,4 +1,6 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
@@ -7,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { getFirebaseAuth } from "../config/firebaseConfig";
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("");
@@ -14,6 +17,7 @@ export default function SignUpPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordMatchError, setPasswordMatchError] = useState(false);
   const router = useRouter();
+  const fireBaseAuth = getFirebaseAuth();
 
   useEffect(() => {
     if (confirmPassword !== "") {
@@ -23,13 +27,43 @@ export default function SignUpPage() {
     }
   }, [password, confirmPassword]);
 
-  const handleSignUp = () => {
+  const handleSignUp = async () => {
     if (password !== confirmPassword) {
       return;
     }
-    // TODO: 백엔드에 회원가입 API 호출
-    alert("회원가입 성공!");
-    router.replace("/");
+
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        fireBaseAuth,
+        email,
+        password
+      );
+      const idToken = await userCredential.user.getIdToken();
+
+      // 토큰 저장 (예: AsyncStorage)
+      await AsyncStorage.setItem("jwtToken", idToken);
+
+      // 백엔드에 회원정보 전송
+      await fetch("https://gamja-friend.onrender.com/user/profile", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      alert("회원가입하였습니다");
+      router.replace("/"); // 회원가입 후 로그인 페이지로 이동
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("회원가입 오류:", error.message);
+        alert("회원가입 실패. " + error.message);
+      } else {
+        console.error("회원가입 오류: 알 수 없는 오류", error);
+        alert("회원가입 실패. 알 수 없는 오류");
+      }
+    }
   };
 
   const isFormValid = email !== "" && password !== "" && confirmPassword !== "";
