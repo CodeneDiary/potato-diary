@@ -39,6 +39,7 @@ export default function WritePage() {
   const [text, setText] = useState("");
   const [emotion, setEmotion] = useState("neutral");
   const [showPicker, setShowPicker] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const isEdit = !!initial;
 
   useEffect(() => {
@@ -54,6 +55,8 @@ export default function WritePage() {
   }, [initial]);
 
   const handleSave = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
     console.log("🔵 저장 버튼 클릭됨");
     try {
       const token = await AsyncStorage.getItem("jwtToken");
@@ -83,14 +86,17 @@ export default function WritePage() {
           `일기 저장 성공!\n감정: ${data.diary.emotion}`
         );
         router.replace(`/view/${date}`); // ✅ 저장 후 해당 일기 보기 페이지로 이동
+        setIsSaving(false);
       } else {
         const errorText = await response.text();
         console.log("❌ 오류 응답 데이터:", errorText);
         Alert.alert("오류", errorText || "서버 오류 발생");
+        setIsSaving(false);
       }
     } catch (e) {
       console.log("❌ 요청 중 오류 발생:", e);
       Alert.alert("오류", "서버에 연결할 수 없습니다.");
+      setIsSaving(false);
     }
   };
 

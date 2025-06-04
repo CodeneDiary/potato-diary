@@ -1,4 +1,3 @@
-import { listenForTokenChanges } from "@/utils/firebaseTokenListener";
 import { Asset } from "expo-asset";
 import * as Font from "expo-font";
 import { Stack } from "expo-router";
@@ -34,7 +33,6 @@ export default function RootLayout() {
     }
 
     loadAssets();
-    listenForTokenChanges(); // 앱 시작 시 토큰 감지 시작
   }, []);
 
   const onLayoutRootView = useCallback(async () => {
