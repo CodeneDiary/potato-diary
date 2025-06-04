@@ -13,6 +13,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { emotionToGroup } from "../../utils/emotionMap";
 
 const emotionImages: Record<string, any> = {
   happy: require("../../assets/images/emotion-happy.png"),
@@ -28,6 +29,7 @@ export default function ViewDiaryPage() {
   const [diary, setDiary] = useState<{
     emotion: string;
     content: string;
+    rawEmotion: string;
   } | null>(null);
 
   useEffect(() => {
@@ -52,9 +54,12 @@ export default function ViewDiaryPage() {
             return entryDate === date;
           });
           if (diaryEntry) {
+            const mappedEmotion =
+              emotionToGroup[diaryEntry.emotion] || "neutral";
             setDiary({
-              emotion: diaryEntry.emotion.toLowerCase(),
+              emotion: mappedEmotion,
               content: diaryEntry.content,
+              rawEmotion: diaryEntry.emotion, // original text label like "좌절"
             });
           } else {
             setDiary(null);
@@ -106,7 +111,7 @@ export default function ViewDiaryPage() {
     <View style={styles.container}>
       {/* 상단 헤더 */}
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()}>
+        <Pressable onPress={() => router.replace("/calendar")}>
           <Ionicons name="chevron-back" size={28} color="#63411F" />
         </Pressable>
       </View>
@@ -116,10 +121,13 @@ export default function ViewDiaryPage() {
           {dayjs(date as string).format("M월 D일")}
         </Text>
         {diary && (
-          <Image
-            source={emotionImages[diary.emotion]}
-            style={styles.emotionImage}
-          />
+          <>
+            <Image
+              source={emotionImages[diary.emotion]}
+              style={styles.emotionImage}
+            />
+            <Text style={styles.emotionLabel}>{diary.rawEmotion}</Text>
+          </>
         )}
       </View>
 
@@ -202,6 +210,12 @@ const styles = StyleSheet.create({
     height: 60,
     marginBottom: 20,
     marginTop: 10,
+  },
+  emotionLabel: {
+    fontSize: 18,
+    fontFamily: "Cafe24Dongdong",
+    color: "#63411F",
+    marginBottom: 10,
   },
   diarySection: {
     width: 330,

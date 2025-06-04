@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import MonthYearPicker from "../components/MonthYearPicker";
-
+import { emotionToGroup } from "../utils/emotionMap";
 // ✅ 감정별 이미지 매핑
 const emotionImages: Record<string, any> = {
   happy: require("../assets/images/emotion-happy.png"),
@@ -44,7 +44,8 @@ export default function Calendar() {
           const diariesByDate: Record<string, { emotion: string }> = {};
           data.forEach((entry: any) => {
             const dateKey = dayjs(entry.date).format("YYYY-MM-DD");
-            diariesByDate[dateKey] = { emotion: entry.emotion.toLowerCase() };
+            const mappedEmotion = emotionToGroup[entry.emotion] || "neutral";
+            diariesByDate[dateKey] = { emotion: mappedEmotion };
           });
           setFetchedDiaries(diariesByDate);
         } else {
