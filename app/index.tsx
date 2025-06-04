@@ -52,21 +52,6 @@ export default function LoginPage() {
       await AsyncStorage.setItem("jwtToken", idToken);
       console.log("idToken 저장 완료");
 
-      const response = await fetch(
-        "https://gamja-friend.onrender.com/user/profile",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${idToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email }),
-        }
-      );
-
-      const responseData = await response.json();
-      console.log("백엔드 응답:", responseData);
-
       router.replace("/(tabs)/calendar");
     } catch (error) {
       if (error instanceof Error) {

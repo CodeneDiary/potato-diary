@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import React, { useEffect, useState } from "react";
@@ -38,21 +37,6 @@ export default function SignUpPage() {
         email,
         password
       );
-      const idToken = await userCredential.user.getIdToken();
-
-      // 토큰 저장 (예: AsyncStorage)
-      await AsyncStorage.setItem("jwtToken", idToken);
-
-      // 백엔드에 회원정보 전송
-      await fetch("https://gamja-friend.onrender.com/user/profile", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
-      });
-
       alert("회원가입하였습니다");
       router.replace("/"); // 회원가입 후 로그인 페이지로 이동
     } catch (error) {

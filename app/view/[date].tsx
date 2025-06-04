@@ -33,20 +33,22 @@ export default function ViewDiaryPage() {
   useEffect(() => {
     const loadDiary = async () => {
       try {
+        const token = await AsyncStorage.getItem("jwtToken");
+        const authHeader = token ? `Bearer ${token}` : "";
         const response = await fetch(
           "https://gamja-friend.onrender.com/diary/list",
           {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
-              Authorization: "Bearer dev-token",
+              Authorization: authHeader,
             },
           }
         );
         if (response.ok) {
           const data = await response.json();
           const diaryEntry = data.find((entry: any) => {
-            const entryDate = dayjs(entry.created_at).format("YYYY-MM-DD");
+            const entryDate = dayjs(entry.date).format("YYYY-MM-DD");
             return entryDate === date;
           });
           if (diaryEntry) {
@@ -58,7 +60,10 @@ export default function ViewDiaryPage() {
             setDiary(null);
           }
         } else {
-          console.error("서버에서 일기 데이터를 가져오지 못했습니다.");
+          const errorData = await response.json().catch(() => null);
+          console.error("❌ 일기 데이터 불러오기 실패!");
+          console.error("상태 코드:", response.status);
+          console.error("응답 내용:", errorData);
           setDiary(null);
         }
       } catch (error) {

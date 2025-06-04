@@ -1,5 +1,6 @@
 // app/write/[date].tsx
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import dayjs from "dayjs";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
@@ -53,34 +54,42 @@ export default function WritePage() {
   }, [initial]);
 
   const handleSave = async () => {
+    console.log("🔵 저장 버튼 클릭됨");
     try {
+      const token = await AsyncStorage.getItem("jwtToken");
+      console.log("🔵 토큰:", token);
+      if (!token) {
+        console.log("❌ 토큰이 없음");
+      }
+      console.log("🔵 fetch 요청 전: ", { text });
       const response = await fetch(
         "https://gamja-friend.onrender.com/diary/text",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: "Bearer dev-token",
+            Authorization: token ? `Bearer ${token}` : "",
           },
-          body: JSON.stringify({ text }),
+          body: JSON.stringify({ text, date }),
         }
       );
+      console.log("🔵 요청 완료. 응답 상태:", response.status);
 
       if (response.ok) {
         const data = await response.json();
+        console.log("✅ 응답 데이터:", data);
         Alert.alert(
           "저장 완료",
           `일기 저장 성공!\n감정: ${data.diary.emotion}`
         );
-        router.back();
+        router.replace(`/view/${date}`); // ✅ 저장 후 해당 일기 보기 페이지로 이동
       } else {
-        const errorData = await response.json();
-        Alert.alert(
-          "오류",
-          errorData.message || "일기를 저장하는 중 오류 발생"
-        );
+        const errorText = await response.text();
+        console.log("❌ 오류 응답 데이터:", errorText);
+        Alert.alert("오류", errorText || "서버 오류 발생");
       }
     } catch (e) {
+      console.log("❌ 요청 중 오류 발생:", e);
       Alert.alert("오류", "서버에 연결할 수 없습니다.");
     }
   };
