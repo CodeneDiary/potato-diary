@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
+import { deleteUser, getAuth, signOut } from "firebase/auth";
 import React, { useState } from "react";
 import { Alert, Pressable, StyleSheet, Switch, Text, View } from "react-native";
 
@@ -10,26 +11,50 @@ export default function SettingsPage() {
 
   const toggleSwitch = () => setIsEnabled((prev) => !prev);
 
-  const handleLogout = () => {
-    Alert.alert("로그아웃", "로그아웃 하시겠어요?", [
-      { text: "취소", style: "cancel" },
-      { text: "확인", onPress: () => console.log("로그아웃 로직 실행") },
-    ]);
-  };
-  const handleClearToken = async () => {
+  const handleLogout = async () => {
+    const auth = getAuth();
     try {
-      await AsyncStorage.removeItem("jwtToken");
-      console.log("토큰 삭제 완료");
-      Alert.alert("완료", "토큰이 삭제되었습니다.");
+      await signOut(auth); // Firebase에서 로그아웃
+      await AsyncStorage.removeItem("jwtToken"); // 저장된 토큰 제거
+      console.log("✅ 로그아웃 완료");
+      Alert.alert("로그아웃", "로그아웃 되었습니다.");
+      router.replace("/"); // 로그인 페이지로 이동
     } catch (error) {
-      console.error("토큰 삭제 오류:", error);
-      Alert.alert("오류", "토큰 삭제 중 오류가 발생했습니다.");
+      console.error("❌ 로그아웃 실패:", error);
+      Alert.alert("오류", "로그아웃 중 오류 발생");
     }
   };
-  const handleWithdraw = () => {
-    Alert.alert("회원 탈퇴", "정말로 탈퇴하시겠어요?", [
+
+  const handleWithdraw = async () => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+
+    if (!user) {
+      Alert.alert("오류", "현재 로그인된 사용자가 없습니다.");
+      return;
+    }
+
+    Alert.alert("회원 탈퇴", "정말 탈퇴하시겠어요?", [
       { text: "취소", style: "cancel" },
-      { text: "확인", onPress: () => console.log("회원 탈퇴 로직 실행") },
+      {
+        text: "확인",
+        onPress: async () => {
+          try {
+            await deleteUser(user);
+            await AsyncStorage.removeItem("jwtToken");
+            console.log("✅ 회원 탈퇴 완료");
+            Alert.alert("완료", "회원 탈퇴가 완료되었습니다.");
+            router.replace("/");
+          } catch (error: any) {
+            console.error("❌ 회원 탈퇴 실패:", error);
+            if (error.code === "auth/requires-recent-login") {
+              Alert.alert("실패", "다시 로그인 후 탈퇴해주세요.");
+            } else {
+              Alert.alert("오류", "탈퇴 중 오류 발생");
+            }
+          }
+        },
+      },
     ]);
   };
 
@@ -53,7 +78,7 @@ export default function SettingsPage() {
           />
         </View>
 
-        <Pressable style={styles.itemRow} onPress={handleClearToken}>
+        <Pressable style={styles.itemRow} onPress={handleLogout}>
           <Text style={styles.itemText}>로그아웃</Text>
         </Pressable>
 
