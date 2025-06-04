@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useRef, useState } from "react";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Image,
@@ -8,17 +8,60 @@ import {
   StyleSheet,
   Text,
   View,
+  Alert,
 } from "react-native";
+import useVoiceRecorder from "@/components/VoiceRecord";
 
-export default function Chatbot() {
+export default function ChatbotVoicePage() {
   const router = useRouter();
+  const { diary_id } = useLocalSearchParams();
   const [isRecording, setIsRecording] = useState(false);
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  const toggleRecording = () => {
-    setIsRecording((prev) => !prev);
+  const [history, setHistory] = useState<
+    { user_input: string; response: string; audio_url?: string }[]
+  >([]);
 
-    // 버튼 클릭 애니메이션
+  const parsedDiaryId = Array.isArray(diary_id) ? diary_id[0] : (diary_id as string);
+
+  // 첫 질문 요청 + TTS 재생
+  useEffect(() => {
+    const fetchFirstQuestion = async () => {
+      try {
+        const res = await fetch("https://gamja-friend.onrender.com/generate-question", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ diary_id: diary_id }),
+        });
+        const data = await res.json();
+        const question = data.question;
+
+        setHistory([{ user_input: "", response: question }]);
+      } catch (error) {
+        console.error("첫 질문 생성 실패:", error);
+        Alert.alert("에러", "챗봇의 첫 질문을 받아오지 못했습니다.");
+      }
+    };
+
+    fetchFirstQuestion();
+  }, [parsedDiaryId]);
+
+  // 대화 응답 핸들링
+  const handleComplete = (
+    input: string,
+    response: string,
+    audio_url?: string
+  ) => {
+    setHistory((prev) => [...prev, { user_input: input, response, audio_url }]);
+  };
+
+  // 음성 녹음 토글
+  const { toggleRecording } = useVoiceRecorder(handleComplete, history, parsedDiaryId);
+
+  const handleMicPress = () => {
+    setIsRecording((prev) => !prev);
+    toggleRecording();
+
     Animated.sequence([
       Animated.timing(scaleAnim, {
         toValue: 1.1,
@@ -33,6 +76,15 @@ export default function Chatbot() {
     ]).start();
   };
 
+  // 대화 종료 → 대화 내역 페이지 이동
+  const handleExit = () => {
+    const parsedDiaryId = Array.isArray(diary_id) ? diary_id[0] : diary_id as string;
+    router.push({
+    pathname: "/chat-history",
+    query: { diary_id: parsedDiaryId }
+  } as any);
+  };
+
   return (
     <View style={styles.container}>
       {/* 상단 헤더 */}
@@ -40,11 +92,14 @@ export default function Chatbot() {
         <Pressable onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={28} color="#63411F" />
         </Pressable>
+        <Text style={styles.title}>감정 챗봇</Text>
+        <Pressable onPress={handleExit}>
+          <Text style={styles.exitText}>대화 종료</Text>
+        </Pressable>
       </View>
 
       {/* 감자 이미지 */}
       <View style={styles.imageWrapper}>
-        <Text style={styles.title}>감정 챗봇</Text>
         <Image
           source={require("@/assets/images/potato.png")}
           style={styles.potatoImage}
@@ -56,7 +111,7 @@ export default function Chatbot() {
       <View style={styles.content}>
         <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
           <Pressable
-            onPress={toggleRecording}
+            onPress={handleMicPress}
             style={[styles.micButton, isRecording && styles.micButtonActive]}
           >
             <Ionicons
@@ -79,22 +134,26 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
     marginBottom: 10,
   },
   title: {
-    marginLeft: 10,
-    fontSize: 28,
+    fontSize: 24,
     fontFamily: "Cafe24Dongdong",
     color: "#63411F",
+  },
+  exitText: {
+    fontSize: 16,
+    color: "#C94A4A",
   },
   imageWrapper: {
     alignItems: "center",
     marginTop: 10,
   },
   potatoImage: {
-    marginTop: 70,
+    marginTop: 60,
     width: 160,
     height: 160,
   },
