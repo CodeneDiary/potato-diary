@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useRef, useState } from "react";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Image,
@@ -9,23 +9,81 @@ import {
   Text,
   View,
   Alert,
-  ActivityIndicator,
-  ScrollView,
 } from "react-native";
-import { Audio } from "expo-av";
+import useVoiceRecorder from "@/components/VoiceRecord";
 
-export default function ChatbotVoice() {
+export default function ChatbotVoicePage() {
   const router = useRouter();
+  const { diary_id } = useLocalSearchParams();
   const [isRecording, setIsRecording] = useState(false);
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [chatHistory, setChatHistory] = useState<
-    { user_input: string; response: string }[]
-  >([]);
-
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  const toggleRecording = async () => {
+  const [history, setHistory] = useState<
+    { user_input: string; response: string; audio_url?: string }[]
+  >([]);
+
+  const parsedDiaryId = Array.isArray(diary_id) ? diary_id[0] : (diary_id as string);
+
+  // 첫 질문 요청 + TTS 재생
+  // useEffect(() => {
+  //   const fetchFirstQuestion = async () => {
+  //     try {
+  //       const res = await fetch("https://gamja-friend.onrender.com/generate-question", {
+  //         method: "POST",
+  //         headers: { "Content-Type": "application/json" },
+  //         body: JSON.stringify({ diary_id: diary_id }),
+  //       });
+  //       const data = await res.json();
+  //       const question = data.question;
+
+  //       setHistory([{ user_input: "", response: question }]);
+  //     } catch (error) {
+  //       console.error("첫 질문 생성 실패:", error);
+  //       Alert.alert("에러", "챗봇의 첫 질문을 받아오지 못했습니다.");
+  //     }
+  //   };
+
+  //   fetchFirstQuestion();
+  // }, [parsedDiaryId]);
+  useEffect(() => {
+  const fetchFirstQuestion = async () => {
+    try {
+      const res = await fetch("https://gamja-friend.onrender.com/generate-question", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          diary_text: "오늘은 친구랑 다퉜는데 마음이 너무 무거웠다. 어떻게 해야 할지 모르겠다."
+        }),
+      });
+      const data = await res.json();
+      const question = data.question;
+
+      setHistory([{ user_input: "", response: question }]);
+    } catch (error) {
+      console.error("첫 질문 생성 실패:", error);
+      Alert.alert("에러", "챗봇의 첫 질문을 받아오지 못했습니다.");
+    }
+  };
+
+  fetchFirstQuestion();
+}, []);
+
+  // 대화 응답 핸들링
+  const handleComplete = (
+    input: string,
+    response: string,
+    audio_url?: string
+  ) => {
+    setHistory((prev) => [...prev, { user_input: input, response, audio_url }]);
+  };
+
+  // 음성 녹음 토글
+  const { toggleRecording } = useVoiceRecorder(handleComplete, history, parsedDiaryId);
+
+  const handleMicPress = () => {
+    setIsRecording((prev) => !prev);
+    toggleRecording();
+
     Animated.sequence([
       Animated.timing(scaleAnim, {
         toValue: 1.1,
@@ -38,78 +96,32 @@ export default function ChatbotVoice() {
         useNativeDriver: true,
       }),
     ]).start();
+  };
 
-    if (!isRecording) {
-      try {
-        const permission = await Audio.requestPermissionsAsync();
-        if (!permission.granted) {
-          Alert.alert("마이크 권한이 필요합니다.");
-          return;
-        }
-
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: true,
-          playsInSilentModeIOS: true,
-        });
-
-        const { recording } = await Audio.Recording.createAsync(
-          Audio.RecordingOptionsPresets.HIGH_QUALITY
-        );
-        setRecording(recording);
-        setIsRecording(true);
-      } catch (err) {
-        console.error("녹음 오류:", err);
-      }
-    } else {
-      try {
-        if (!recording) return;
-        await recording.stopAndUnloadAsync();
-        setIsRecording(false);
-
-        const uri = recording.getURI();
-        if (!uri) return;
-
-        setLoading(true);
-        const formData = new FormData();
-        formData.append("file", {
-          uri,
-          name: "voice.m4a",
-          type: "audio/m4a",
-        } as any);
-        formData.append("history", JSON.stringify(chatHistory));
-
-        const res = await fetch("https://gamja-friend.onrender.com/upload", {
-        method: "POST",
-        body: formData,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-        const data = await res.json();
-        setChatHistory((prev) => [
-          ...prev,
-          { user_input: data.input, response: data.response },
-        ]);
-        setLoading(false);
-      } catch (err) {
-        console.error("전송 오류:", err);
-        Alert.alert("서버 오류", "응답을 받아오지 못했습니다.");
-        setLoading(false);
-      }
-    }
+  // 대화 종료 → 대화 내역 페이지 이동
+  const handleExit = () => {
+    const parsedDiaryId = Array.isArray(diary_id) ? diary_id[0] : diary_id as string;
+    router.push({
+    pathname: "/chat-history",
+    query: { diary_id: parsedDiaryId }
+  } as any);
   };
 
   return (
     <View style={styles.container}>
+      {/* 상단 헤더 */}
       <View style={styles.header}>
         <Pressable onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={28} color="#63411F" />
         </Pressable>
+        <Text style={styles.title}>감정 챗봇</Text>
+        <Pressable onPress={handleExit}>
+          <Text style={styles.exitText}>대화 종료</Text>
+        </Pressable>
       </View>
 
+      {/* 감자 이미지 */}
       <View style={styles.imageWrapper}>
-        <Text style={styles.title}>감정 챗봇</Text>
         <Image
           source={require("@/assets/images/potato.png")}
           style={styles.potatoImage}
@@ -117,10 +129,11 @@ export default function ChatbotVoice() {
         />
       </View>
 
+      {/* 마이크 버튼 */}
       <View style={styles.content}>
         <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
           <Pressable
-            onPress={toggleRecording}
+            onPress={handleMicPress}
             style={[styles.micButton, isRecording && styles.micButtonActive]}
           >
             <Ionicons
@@ -131,30 +144,6 @@ export default function ChatbotVoice() {
           </Pressable>
         </Animated.View>
       </View>
-
-      <ScrollView style={styles.responseWrapper}>
-        {loading ? (
-          <ActivityIndicator size="large" />
-        ) : (
-          <>
-            {chatHistory.map((entry, idx) => (
-              <View key={idx} style={{ marginBottom: 16 }}>
-                <Text style={{ fontWeight: "bold", color: "#63411F" }}>
-                  사용자
-                </Text>
-                <Text style={styles.responseText}>{entry.user_input}</Text>
-
-                <Text
-                  style={{ fontWeight: "bold", marginTop: 4, color: "#C94A4A" }}
-                >
-                  감자
-                </Text>
-                <Text style={styles.responseText}>{entry.response}</Text>
-              </View>
-            ))}
-          </>
-        )}
-      </ScrollView>
     </View>
   );
 }
@@ -167,22 +156,26 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
     marginBottom: 10,
   },
   title: {
-    marginLeft: 10,
-    fontSize: 28,
+    fontSize: 24,
     fontFamily: "Cafe24Dongdong",
     color: "#63411F",
+  },
+  exitText: {
+    fontSize: 16,
+    color: "#C94A4A",
   },
   imageWrapper: {
     alignItems: "center",
     marginTop: 10,
   },
   potatoImage: {
-    marginTop: 70,
+    marginTop: 60,
     width: 160,
     height: 160,
   },
@@ -202,13 +195,5 @@ const styles = StyleSheet.create({
   },
   micButtonActive: {
     backgroundColor: "#C94A4A",
-  },
-  responseWrapper: {
-    marginTop: 40,
-    paddingHorizontal: 24,
-  },
-  responseText: {
-    fontSize: 16,
-    color: "#222",
   },
 });
