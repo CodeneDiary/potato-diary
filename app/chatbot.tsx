@@ -25,48 +25,48 @@ export default function ChatbotVoicePage() {
   const parsedDiaryId = Array.isArray(diary_id) ? diary_id[0] : (diary_id as string);
 
   // 첫 질문 요청 + TTS 재생
-  // useEffect(() => {
-  //   const fetchFirstQuestion = async () => {
-  //     try {
-  //       const res = await fetch("https://gamja-friend.onrender.com/generate-question", {
-  //         method: "POST",
-  //         headers: { "Content-Type": "application/json" },
-  //         body: JSON.stringify({ diary_id: diary_id }),
-  //       });
-  //       const data = await res.json();
-  //       const question = data.question;
-
-  //       setHistory([{ user_input: "", response: question }]);
-  //     } catch (error) {
-  //       console.error("첫 질문 생성 실패:", error);
-  //       Alert.alert("에러", "챗봇의 첫 질문을 받아오지 못했습니다.");
-  //     }
-  //   };
-
-  //   fetchFirstQuestion();
-  // }, [parsedDiaryId]);
   useEffect(() => {
-  const fetchFirstQuestion = async () => {
-    try {
-      const res = await fetch("https://gamja-friend.onrender.com/generate-question", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          diary_text: "오늘은 친구랑 다퉜는데 마음이 너무 무거웠다. 어떻게 해야 할지 모르겠다."
-        }),
-      });
-      const data = await res.json();
-      const question = data.question;
+    const fetchFirstQuestion = async () => {
+      try {
+        const res = await fetch("https://gamja-friend.onrender.com/generate-question", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ diary_id: diary_id }),
+        });
+        const data = await res.json();
+        const question = data.question;
 
-      setHistory([{ user_input: "", response: question }]);
-    } catch (error) {
-      console.error("첫 질문 생성 실패:", error);
-      Alert.alert("에러", "챗봇의 첫 질문을 받아오지 못했습니다.");
-    }
-  };
+        setHistory([{ user_input: "", response: question }]);
+      } catch (error) {
+        console.error("첫 질문 생성 실패:", error);
+        Alert.alert("에러", "챗봇의 첫 질문을 받아오지 못했습니다.");
+      }
+    };
 
-  fetchFirstQuestion();
-}, []);
+    fetchFirstQuestion();
+  }, [parsedDiaryId]);
+//   useEffect(() => {
+//   const fetchFirstQuestion = async () => {
+//     try {
+//       const res = await fetch("https://gamja-friend.onrender.com/generate-question", {
+//         method: "POST",
+//         headers: { "Content-Type": "application/json" },
+//         body: JSON.stringify({
+//           diary_text: "오늘은 친구랑 다퉜는데 마음이 너무 무거웠다. 어떻게 해야 할지 모르겠다."
+//         }),
+//       });
+//       const data = await res.json();
+//       const question = data.question;
+
+//       setHistory([{ user_input: "", response: question }]);
+//     } catch (error) {
+//       console.error("첫 질문 생성 실패:", error);
+//       Alert.alert("에러", "챗봇의 첫 질문을 받아오지 못했습니다.");
+//     }
+//   };
+
+//   fetchFirstQuestion();
+// }, []);
 
   // 대화 응답 핸들링
   const handleComplete = (
