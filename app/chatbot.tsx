@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import {
   Animated,
   Image,
@@ -25,26 +26,64 @@ export default function ChatbotVoicePage() {
   const parsedDiaryId = Array.isArray(diary_id) ? diary_id[0] : (diary_id as string);
 
   // 첫 질문 요청 + TTS 재생
-  useEffect(() => {
+const { date } = useLocalSearchParams();
+const parsedDate = Array.isArray(date) ? date[0] : date;
+
+useEffect(() => {
     const fetchFirstQuestion = async () => {
       try {
-        const res = await fetch("https://gamja-friend.onrender.com/generate-question", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ diary_id: diary_id }),
-        });
-        const data = await res.json();
-        const question = data.question;
+        // diary_id 없으면 AsyncStorage에서 불러오기
+        let diaryId = parsedDiaryId;
+        if (!diaryId) {
+          const storedId = await AsyncStorage.getItem("latest_diary_id");
+          if (!storedId) {
+            Alert.alert("에러", "일기 ID가 제공되지 않았습니다.");
+            return;
+          }
+          diaryId = storedId;
+        }
 
-        setHistory([{ user_input: "", response: question }]);
-      } catch (error) {
-        console.error("첫 질문 생성 실패:", error);
-        Alert.alert("에러", "챗봇의 첫 질문을 받아오지 못했습니다.");
-      }
-    };
+        // 1. diary_id로 일기 내용 조회
+        const diaryRes = await fetch(
+          `https://gamja-friend.onrender.com/diary/text/${diaryId}`
+        );
+        const diaryData = await diaryRes.json();
+        console.log("🔍 diaryData 전체 응답:", diaryData);
 
-    fetchFirstQuestion();
-  }, [parsedDiaryId]);
+        const diaryText =
+          typeof diaryData.text === "string"
+            ? diaryData.text
+            : diaryData.text?.content;
+
+        if (!diaryText) {
+          console.warn("❌ 일기 텍스트 없음");
+          return;
+        }
+
+        console.log("🔵 가져온 일기:", diaryText);
+
+      // 2. 가져온 일기 텍스트 기반으로 질문 생성 요청
+      const res = await fetch("https://gamja-friend.onrender.com/generate-question", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          diary_text: diaryText
+        }),
+      });
+
+      const data = await res.json();
+      const question = data.question;
+
+      setHistory([{ user_input: "", response: question }]);
+    } catch (error) {
+      console.error("첫 질문 생성 실패:", error);
+      Alert.alert("에러", "챗봇의 첫 질문을 받아오지 못했습니다.");
+    }
+  };
+
+  fetchFirstQuestion();
+}, [parsedDiaryId]);
+
 
   // 대화 응답 핸들링
   const handleComplete = (
