@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import dayjs from "dayjs";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -15,7 +14,7 @@ const emotionImages: Record<string, any> = {
   angry: require("../assets/images/emotion-angry.png"),
 };
 
-export default function Calendar() {
+export default function Calendar({ diaryList }: { diaryList: any[] }) {
   const [currentDate, setCurrentDate] = useState(dayjs());
   const [showPicker, setShowPicker] = useState(false);
   const [fetchedDiaries, setFetchedDiaries] = useState<
@@ -24,42 +23,14 @@ export default function Calendar() {
   const router = useRouter();
 
   useEffect(() => {
-    const fetchDiaries = async () => {
-      try {
-        const token = await AsyncStorage.getItem("jwtToken");
-        const response = await fetch(
-          "https://gamja-friend.onrender.com/diary/list",
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: token ? `Bearer ${token}` : "",
-            },
-          }
-        );
-        if (response.ok) {
-          const data = await response.json();
-          console.log("받아온 일기 데이터 전체:", data);
-          // data 배열 -> { "YYYY-MM-DD": { emotion: "happy" } } 형태로 변환
-          const diariesByDate: Record<string, { emotion: string }> = {};
-          data.forEach((entry: any) => {
-            const dateKey = dayjs(entry.date).format("YYYY-MM-DD");
-            const mappedEmotion = emotionToGroup[entry.emotion] || "neutral";
-            diariesByDate[dateKey] = { emotion: mappedEmotion };
-          });
-          setFetchedDiaries(diariesByDate);
-        } else {
-          console.error(`일기 목록 불러오기 실패. Status: ${response.status}`);
-          const errorText = await response.text();
-          console.error("에러 메시지:", errorText);
-        }
-      } catch (error) {
-        console.error("일기 목록 요청 중 오류 발생", error);
-      }
-    };
-
-    fetchDiaries();
-  }, []);
+    const diariesByDate: Record<string, { emotion: string }> = {};
+    diaryList.forEach((entry: any) => {
+      const dateKey = dayjs(entry.date).format("YYYY-MM-DD");
+      const mappedEmotion = emotionToGroup[entry.emotion] || "neutral";
+      diariesByDate[dateKey] = { emotion: mappedEmotion };
+    });
+    setFetchedDiaries(diariesByDate);
+  }, [diaryList]);
 
   const year = currentDate.year();
   const month = currentDate.month() + 1;

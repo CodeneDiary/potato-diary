@@ -1,8 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import dayjs from "dayjs";
 import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Image,
   Pressable,
@@ -11,55 +10,31 @@ import {
   Text,
   View,
 } from "react-native";
-import { EmotionType, emotionImages } from "../constants/emotionImages";
+import { emotionImages } from "../constants/emotionImages";
+import { emotionToGroup } from "../utils/emotionMap";
 import MonthYearPicker from "./MonthYearPicker";
 
-export default function DiaryList() {
+export default function DiaryList({ diaryList }: { diaryList: any[] }) {
   const router = useRouter();
-  const [diaries, setDiaries] = useState<
-    { date: string; content: string; emotion: EmotionType }[]
-  >([]);
   const [selectedDate, setSelectedDate] = useState(dayjs());
   const [showPicker, setShowPicker] = useState(false);
 
-  useEffect(() => {
-    const loadAll = async () => {
-      const allKeys = await AsyncStorage.getAllKeys();
-      const diaryKeys = allKeys.filter((k) => k.startsWith("diary-"));
-      const diaryData: typeof diaries = [];
+  const filtered = diaryList
+    .map((entry: any) => ({
+      id: entry.id,
+      date: entry.date,
+      content: entry.content,
+      emotion: emotionToGroup[entry.emotion] || "neutral",
+    }))
+    .filter((d: any) => {
+      const dDate = dayjs(d.date);
+      return (
+        dDate.year() === selectedDate.year() &&
+        dDate.month() === selectedDate.month()
+      );
+    });
 
-      for (const key of diaryKeys) {
-        const data = await AsyncStorage.getItem(key);
-        if (!data) continue;
-        try {
-          const parsed = JSON.parse(data);
-          const emotion = parsed.emotion;
-          if (["happy", "sad", "calm", "angry", "neutral"].includes(emotion)) {
-            diaryData.push({
-              date: key.replace("diary-", ""),
-              content: parsed.content,
-              emotion: emotion as EmotionType,
-            });
-          }
-        } catch (e) {
-          continue;
-        }
-      }
-
-      const filtered = diaryData.filter((d) => {
-        const dDate = dayjs(d.date);
-        return (
-          dDate.year() === selectedDate.year() &&
-          dDate.month() === selectedDate.month()
-        );
-      });
-
-      filtered.sort((a, b) => dayjs(a.date).unix() - dayjs(b.date).unix());
-
-      setDiaries(filtered);
-    };
-    loadAll();
-  }, [selectedDate]);
+  filtered.sort((a, b) => dayjs(a.date).unix() - dayjs(b.date).unix());
 
   const year = selectedDate.year();
   const month = selectedDate.month() + 1;
@@ -81,9 +56,9 @@ export default function DiaryList() {
       </View>
 
       <ScrollView style={styles.listContainer}>
-        {diaries.map((d) => (
+        {filtered.map((d) => (
           <Pressable
-            key={d.date}
+            key={d.id}
             onPress={() => router.push(`/view/${d.date}`)}
             style={styles.diaryItem}
           >

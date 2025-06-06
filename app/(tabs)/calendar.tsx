@@ -8,6 +8,13 @@ import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
+type DiaryType = {
+  id: number;
+  date: string;
+  content: string;
+  emotion: string;
+};
+
 export default function CalendarPage() {
   const router = useRouter();
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
@@ -21,24 +28,45 @@ export default function CalendarPage() {
     setViewMode(viewModeRef.current);
   }, []);
 
-  const goToTodayWrite = async () => {
-    const today = dayjs().format("YYYY-MM-DD");
+  const [diaryList, setDiaryList] = useState<DiaryType[]>([]);
 
-    try {
-      const existingDiary = await AsyncStorage.getItem(`diary_${today}`);
-      if (existingDiary) {
-        // 이미 일기가 있으면 일기 확인 페이지로 이동
-        router.push({ pathname: "/view/[date]", params: { date: today } });
-      } else {
-        // 없으면 일기 작성 페이지로 이동
-        router.push(`/write/${today}`);
-      }
-    } catch (error) {
-      console.error("일기 확인 중 오류:", error);
-      // 오류 시 기본적으로 작성 페이지로 이동
+  const goToTodayWrite = () => {
+    const today = dayjs().format("YYYY-MM-DD");
+    const todayDiary = diaryList.find((entry) => entry.date === today);
+
+    if (todayDiary) {
+      router.push({ pathname: "/view/[date]", params: { date: today } });
+    } else {
       router.push(`/write/${today}`);
     }
   };
+
+  useEffect(() => {
+    const fetchDiaries = async () => {
+      try {
+        const token = await AsyncStorage.getItem("jwtToken");
+        const response = await fetch(
+          "https://gamja-friend.onrender.com/diary/list",
+          {
+            headers: {
+              Authorization: token ? `Bearer ${token}` : "",
+            },
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          console.log("📘 받아온 일기 데이터:", data);
+          setDiaryList(data);
+        } else {
+          const errorText = await response.text();
+          console.error("일기 목록 불러오기 실패:", errorText);
+        }
+      } catch (error) {
+        console.error("일기 목록 요청 중 오류 발생", error);
+      }
+    };
+    fetchDiaries();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -63,7 +91,11 @@ export default function CalendarPage() {
         </View>
       </View>
       {/* 메인 화면 */}
-      {viewMode === "calendar" ? <Calendar /> : <DiaryList />}
+      {viewMode === "calendar" ? (
+        <Calendar diaryList={diaryList} />
+      ) : (
+        <DiaryList diaryList={diaryList} />
+      )}
       <View style={styles.buttonContainer}>
         <Pressable style={styles.fab} onPress={goToTodayWrite}>
           <Ionicons name="add" size={32} color="#FFF" />
