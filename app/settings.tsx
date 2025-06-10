@@ -16,7 +16,6 @@ export default function SettingsPage() {
     try {
       await signOut(auth); // Firebase에서 로그아웃
       await AsyncStorage.removeItem("jwtToken"); // 저장된 토큰 제거
-      console.log("✅ 로그아웃 완료");
       Alert.alert("로그아웃", "로그아웃 되었습니다.");
       router.replace("/"); // 로그인 페이지로 이동
     } catch (error) {
@@ -84,9 +83,6 @@ export default function SettingsPage() {
 
         <Pressable style={styles.itemRow} onPress={handleWithdraw}>
           <Text style={styles.itemText}>회원 탈퇴</Text>
-        </Pressable>
-        <Pressable style={styles.itemRow} onPress={() => router.push("/")}>
-          <Text style={styles.itemText}>로그인</Text>
         </Pressable>
       </View>
     </View>

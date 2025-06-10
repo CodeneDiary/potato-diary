@@ -53,6 +53,16 @@ export default function CalendarPage() {
             },
           }
         );
+
+        if (response.status === 401) {
+          console.warn(
+            "⛔️ 토큰이 만료되었거나 유효하지 않음. 로그인 페이지로 이동."
+          );
+          await AsyncStorage.removeItem("jwtToken");
+          router.replace("/");
+          return;
+        }
+
         if (response.ok) {
           const data = await response.json();
           console.log("📘 받아온 일기 데이터:", data);
