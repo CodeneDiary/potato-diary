@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { deleteUser, getAuth, signOut } from "firebase/auth";
 import React, { useState } from "react";
-import { Alert, Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -67,16 +67,6 @@ export default function SettingsPage() {
 
       {/* 목록 */}
       <View style={styles.rowContainer}>
-        <View style={styles.itemRow}>
-          <Text style={styles.itemText}>알림</Text>
-          <Switch
-            value={isEnabled}
-            onValueChange={toggleSwitch}
-            trackColor={{ false: "#ccc", true: "#63411F" }}
-            thumbColor={isEnabled ? "#FFF7E0" : "#fff"}
-          />
-        </View>
-
         <Pressable style={styles.itemRow} onPress={handleLogout}>
           <Text style={styles.itemText}>로그아웃</Text>
         </Pressable>
