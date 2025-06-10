@@ -17,13 +17,14 @@ import {
   View,
 } from "react-native";
 
-const emotionList = ["happy", "calm", "sad", "angry", "neutral"];
+const emotionList = ["happy", "calm", "sad", "angry", "neutral", "anxious"];
 const emotionImages: Record<string, any> = {
   happy: require("../../assets/images/emotion-happy.png"),
   calm: require("../../assets/images/emotion-calm.png"),
   sad: require("../../assets/images/emotion-sad.png"),
   angry: require("../../assets/images/emotion-angry.png"),
   neutral: require("../../assets/images/emotion-neutral.png"),
+  anxious: require("@/assets/images/emotion-anxious.png"),
 };
 const emotionLabels: Record<string, string> = {
   happy: "기쁨",
@@ -31,6 +32,7 @@ const emotionLabels: Record<string, string> = {
   sad: "슬픔",
   angry: "분노",
   neutral: "무감정",
+  anxious: "불안",
 };
 
 export default function WritePage() {

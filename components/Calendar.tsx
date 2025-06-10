@@ -12,6 +12,7 @@ const emotionImages: Record<string, any> = {
   calm: require("../assets/images/emotion-calm.png"),
   neutral: require("../assets/images/emotion-neutral.png"),
   angry: require("../assets/images/emotion-angry.png"),
+  anxious: require("@/assets/images/emotion-anxious.png"),
 };
 
 export default function Calendar({ diaryList }: { diaryList: any[] }) {

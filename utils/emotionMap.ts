@@ -1,6 +1,6 @@
 export const emotionToGroup: Record<
   string,
-  "happy" | "sad" | "calm" | "angry" | "neutral"
+  "happy" | "sad" | "calm" | "angry" | "neutral" | "anxious"
 > = {
   // happy
   기쁨: "happy",
@@ -16,7 +16,6 @@ export const emotionToGroup: Record<
   // sad
   슬픔: "sad",
   우울: "sad",
-  불안: "sad",
   외로움: "sad",
   상실: "sad",
   실망: "sad",
@@ -24,32 +23,35 @@ export const emotionToGroup: Record<
   죄책감: "sad",
   비참: "sad",
   답답: "sad",
-  공포: "sad",
-  두려움: "sad",
-  혼란: "sad",
-  걱정: "sad",
-  당황: "sad",
-  당혹: "sad",
-  의심: "sad",
   창피: "sad",
   상처: "sad",
   괴로움: "sad",
   서운: "sad",
   갈망: "sad",
-  충격: "sad",
-  좌절: "sad",
+  그리움: "sad",
 
   // calm
-  평온: "calm",
+  공감: "calm",
   편안: "calm",
   후련함: "calm",
   기대: "calm",
-  공감: "calm",
 
   // angry
   분노: "angry",
   억울: "angry",
   혐오: "angry",
 
-  // neutral
+  // anxious
+  불안: "anxious",
+  공포: "anxious",
+  두려움: "anxious",
+  무서움: "anxious",
+  혼란: "anxious",
+  걱정: "anxious",
+  당황: "anxious",
+  당혹: "anxious",
+  의심: "anxious",
+  충격: "anxious",
+  좌절: "anxious",
+  스트레스: "anxious",
 };

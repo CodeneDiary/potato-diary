@@ -21,6 +21,7 @@ const emotionImages: Record<string, any> = {
   calm: require("../../assets/images/emotion-calm.png"),
   angry: require("../../assets/images/emotion-angry.png"),
   neutral: require("../../assets/images/emotion-neutral.png"),
+  anxious: require("@/assets/images/emotion-anxious.png"),
 };
 
 export default function ViewDiaryPage() {
