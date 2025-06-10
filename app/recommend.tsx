@@ -1,18 +1,83 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-
-const categories = ["책", "영화", "음악", "글귀"];
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
 
 export default function Recommend() {
   const router = useRouter();
+  const { emotion: passedEmotion } = useLocalSearchParams();
   const [selectedCategory, setSelectedCategory] = useState<string>("책");
   const [showDropdown, setShowDropdown] = useState(false);
+  const [recommendations, setRecommendations] = useState<
+    { title: string; url: string }[]
+  >([]);
+  const [emotion, setEmotion] = useState<string>(
+    typeof passedEmotion === "string" ? passedEmotion : ""
+  );
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+  console.log("🔵 전달된 감정:", passedEmotion);
 
   const handleSelect = (category: string) => {
     setSelectedCategory(category);
   };
+
+  const fetchRecommendations = async (emotion: string) => {
+    if (!emotion) {
+      console.log("⚠️ 감정 없음: 추천 요청하지 않음");
+      setRecommendations([]);
+      setAvailableCategories([]);
+      return;
+    }
+    try {
+      const response = await fetch(
+        "https://gamja-friend.onrender.com/recommend/from-emotion?emotion=" +
+          emotion,
+        {
+          method: "POST",
+        }
+      );
+      const data = await response.json();
+      console.log("📟 응답 상태 코드:", response.status);
+      console.log("📥 응답 전체 데이터:", data);
+
+      // 카테고리 키 매핑
+      const categoryMap: { [key: string]: string } = {
+        책: "books",
+        영화: "movies",
+        음악: "music",
+        글귀: "quotes",
+      };
+
+      // 사용 가능한 카테고리 필터링
+      const available = Object.entries(categoryMap)
+        .filter(([kor, key]) => data[key] && data[key].length > 0)
+        .map(([kor]) => kor);
+      setAvailableCategories(available);
+
+      // 기존 selectedCategory 처리
+      const categoryKey = categoryMap[selectedCategory];
+      setRecommendations(data[categoryKey] ?? []);
+      if (categoryKey && data[categoryKey]) {
+        console.log("✅ 추천 콘텐츠 받아옴:", data[categoryKey]);
+      }
+    } catch (error) {
+      console.error("추천 콘텐츠 로딩 실패:", error);
+      setAvailableCategories([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchRecommendations(emotion);
+  }, [selectedCategory, emotion]);
+
+  useEffect(() => {
+    if (
+      availableCategories.length > 0 &&
+      !availableCategories.includes(selectedCategory)
+    ) {
+      setSelectedCategory(availableCategories[0]);
+    }
+  }, [availableCategories]);
 
   return (
     <View style={styles.container}>
@@ -46,7 +111,7 @@ export default function Recommend() {
         </Pressable>
         {showDropdown && (
           <View style={styles.dropdownMenu}>
-            {categories.map((category) => (
+            {availableCategories.map((category) => (
               <Pressable
                 key={category}
                 onPress={() => {
@@ -64,9 +129,32 @@ export default function Recommend() {
       </View>
       {selectedCategory && (
         <View style={styles.detailContainer}>
-          <Text style={styles.detailText}>
-            추천 {selectedCategory} 콘텐츠 보여주는 곳
-          </Text>
+          {recommendations.map((item, index) => (
+            <View
+              key={index}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                marginVertical: 4,
+              }}
+            >
+              <Text
+                style={{
+                  fontFamily: "Cafe24Dongdong",
+                  color: "#63411F",
+                  fontSize: 20,
+                  marginRight: 8,
+                }}
+              >
+                • {item.title}
+              </Text>
+              {item.url ? (
+                <Pressable onPress={() => Linking.openURL(item.url)}>
+                  <Ionicons name="link-outline" size={18} color="#63411F" />
+                </Pressable>
+              ) : null}
+            </View>
+          ))}
         </View>
       )}
     </View>
@@ -109,7 +197,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   detailContainer: {
-    alignItems: "center",
+    paddingLeft: 30,
     paddingTop: 10,
   },
   detailText: {

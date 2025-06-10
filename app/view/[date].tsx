@@ -1,4 +1,5 @@
 // app/view/[date].tsx
+import { emotionToRecommendationMap } from "@/utils/emotionToRecommendationMap";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import dayjs from "dayjs";
@@ -154,7 +155,16 @@ export default function ViewDiaryPage() {
       <View style={styles.extraButtons}>
         <Pressable
           style={styles.extraButton}
-          onPress={() => router.push("/recommend")}
+          onPress={() =>
+            router.push({
+              pathname: "/recommend",
+              params: {
+                emotion:
+                  emotionToRecommendationMap[diary?.rawEmotion || ""] ??
+                  diary?.rawEmotion,
+              },
+            })
+          }
         >
           <Ionicons
             name="sparkles-outline"

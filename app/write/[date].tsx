@@ -83,10 +83,6 @@ export default function WritePage() {
       if (response.ok) {
         const data = await response.json();
         console.log("✅ 응답 데이터:", data);
-        Alert.alert(
-          "저장 완료",
-          `일기 저장 성공!\n감정: ${data.diary.emotion}`
-        );
         router.replace(`/view/${date}`); // ✅ 저장 후 해당 일기 보기 페이지로 이동
         setIsSaving(false);
       } else {
