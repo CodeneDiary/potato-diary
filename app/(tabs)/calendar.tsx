@@ -73,9 +73,6 @@ export default function CalendarPage() {
       {/* 헤더 아이콘 */}
       <View style={styles.header}>
         <View style={styles.iconGroup}>
-          <Pressable onPress={() => console.log("검색")}>
-            <Ionicons name="search" size={24} color="#63411F" />
-          </Pressable>
           <Pressable
             onPress={() =>
               setViewMode(viewMode === "calendar" ? "list" : "calendar")
