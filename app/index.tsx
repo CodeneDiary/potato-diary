@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import React, { useEffect, useState } from "react";
-import { getFirebaseAuth } from "../config/firebaseConfig";
+import { getFirebaseAuth } from "@/config/firebaseConfig";
 
 import {
   ActivityIndicator,

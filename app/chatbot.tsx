@@ -21,6 +21,8 @@ export default function ChatbotVoicePage() {
   const parsedDiaryId = typeof diary_id === "string" ? diary_id : Array.isArray(diary_id) ? diary_id[0] : undefined;
   const parsedDate = typeof date === "string" ? date : Array.isArray(date) ? date[0] : undefined;
 
+  const [diaryId, setDiaryId] = useState<string | undefined>(parsedDiaryId);
+
   const [isRecording, setIsRecording] = useState(false);
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -29,7 +31,39 @@ export default function ChatbotVoicePage() {
   >([]);
 
   // 첫 질문 요청 및 base64 음성 재생
+
   useEffect(() => {
+  const getDiaryId = async () => {
+    if (!parsedDiaryId) {
+      const storedId = await AsyncStorage.getItem("latest_diary_id");
+      if (storedId) {
+        setDiaryId(storedId);
+      }
+    }
+  };
+  getDiaryId();
+}, [parsedDiaryId]);
+
+
+  useEffect(() => {
+    const configureAudio = async () => {
+      try {
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          allowsRecordingIOS: true,
+        });
+        console.log("🎧 오디오 모드 설정 완료");
+      } catch (error) {
+        console.error("❌ 오디오 모드 설정 실패:", error);
+      }
+    };
+
+    configureAudio();
+  }, []);
+
+  useEffect(() => {
+
+    
     const fetchFirstQuestion = async () => {
       try {
         console.log("🟡 fetchFirstQuestion 실행됨");
@@ -53,9 +87,11 @@ export default function ChatbotVoicePage() {
         });
 
         const data = await res.json();
-        console.log("✅ raw data 응답:", data);
+        //console.log("✅ raw data 응답:", data);
         const question = data.question;
         const audioBase64 = data.audio_base64;
+        console.log("🎧 base64 길이:", audioBase64?.length);
+
         console.log("질문 저장 완료: ", question);
 
         if (!question || !audioBase64) {
@@ -65,9 +101,21 @@ export default function ChatbotVoicePage() {
         setHistory([{ user_input: "", response: question }]);
         console.log("📝 첫 질문 저장 완료");
 
-        const sound = new Audio.Sound();
-        await sound.loadAsync({ uri: `data:audio/mp3;base64,${audioBase64}` });
-        await sound.playAsync();
+        try {
+          const sound = new Audio.Sound();
+          await sound.loadAsync({ uri: `data:audio/mp3;base64,${audioBase64}` });
+
+          await sound.playAsync();
+          console.log("🔊 음성 재생 완료");
+        } catch (soundError) {
+          console.error("❌ 음성 재생 실패:", soundError);
+          Alert.alert("오디오 오류", "음성 재생 중 문제가 발생했습니다.");
+        }
+
+        // const sound = new Audio.Sound();
+        // await sound.loadAsync({ uri: data:audio/mp3;base64,${audioBase64} });
+        // await sound.playAsync();
+        
       } catch (error) {
         console.error("❌ 첫 질문 생성 실패:", error);
         Alert.alert("에러", "챗봇의 첫 질문을 받아오지 못했습니다.");
@@ -95,7 +143,9 @@ export default function ChatbotVoicePage() {
     }
   };
 
-  const { toggleRecording } = useVoiceRecorder(handleComplete, history, parsedDiaryId);
+  const { toggleRecording } = useVoiceRecorder(handleComplete, history, diaryId);
+  console.log("🎯 parsedDiaryId to VoiceRecorder:", diaryId);
+
 
   const handleMicPress = () => {
     setIsRecording((prev) => !prev);

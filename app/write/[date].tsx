@@ -83,6 +83,12 @@ export default function WritePage() {
       if (response.ok) {
         const data = await response.json();
         console.log("✅ 응답 데이터:", data);
+        //
+        const diaryId = data.diary.id; // ✅ 저장된 일기의 id
+        // ✅ 1. 챗봇 페이지에서 사용할 수 있도록 저장
+        await AsyncStorage.setItem("latest_diary_id", diaryId.toString());
+        console.log("🔵 저장된 일기 ID:", diaryId.toString());
+        //
         router.replace(`/view/${date}`); // ✅ 저장 후 해당 일기 보기 페이지로 이동
         setIsSaving(false);
       } else {

@@ -11,20 +11,42 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import ChatHistory, { ChatEntry } from "@/app/chathistory";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function ChatHistoryPage() {
   const router = useRouter();
   const { diary_id } = useLocalSearchParams();
+
+  const [diaryId, setDiaryId] = useState<string | undefined>(undefined);
   const [chatData, setChatData] = useState<ChatEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const parsedDiaryId = Array.isArray(diary_id) ? diary_id[0] : (diary_id as string);
-
+  // ✅ diary_id가 유효하지 않으면 AsyncStorage에서 대체값 사용
   useEffect(() => {
+    const resolveDiaryId = async () => {
+      if (typeof diary_id === "string" && diary_id !== "undefined") {
+        setDiaryId(diary_id);
+      } else {
+        const storedId = await AsyncStorage.getItem("latest_diary_id");
+        if (storedId) {
+          setDiaryId(storedId);
+        } else {
+          Alert.alert("에러", "일기 ID가 제공되지 않았고 저장된 ID도 없습니다.");
+          setLoading(false); // 로딩 중지
+        }
+      }
+    };
+    resolveDiaryId();
+  }, [diary_id]);
+
+  // ✅ diaryId가 준비된 경우에만 대화 불러오기
+  useEffect(() => {
+    if (!diaryId) return;
+
     const fetchChatLogs = async () => {
       try {
         const res = await fetch(
-          `https://gamja-friend.onrender.com/chat-history?diary_id=${parsedDiaryId}`
+          `https://gamja-friend.onrender.com/chat-history?diary_id=${diaryId}`
         );
         if (!res.ok) throw new Error("서버 오류");
         const data = await res.json();
@@ -36,8 +58,9 @@ export default function ChatHistoryPage() {
         setLoading(false);
       }
     };
+
     fetchChatLogs();
-  }, [parsedDiaryId]);
+  }, [diaryId]);
 
   return (
     <View style={styles.container}>

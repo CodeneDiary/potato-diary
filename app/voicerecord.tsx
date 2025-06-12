@@ -1,6 +1,7 @@
 import { Audio } from "expo-av";
 import { useState } from "react";
 import { Alert } from "react-native";
+import * as FileSystem from "expo-file-system";
 
 export default function useVoiceRecorder(
   onComplete: (input: string, response: string, audioBase64?: string) => void,
@@ -43,26 +44,35 @@ export default function useVoiceRecorder(
 
         if (!uri) return;
 
-        const formData = new FormData();
-        formData.append("file", {
-          uri,
-          name: "voice.m4a",
-          type: "audio/m4a",
-        } as any);
-        formData.append("history", JSON.stringify(chatHistory));
-        if (diary_id) {
-          formData.append("diary_id", diary_id.toString());
+        const fileInfo = await FileSystem.getInfoAsync(uri);
+        if (!fileInfo.exists) {
+          console.warn("❗ 파일이 존재하지 않습니다:", fileInfo.uri);
+          return;
         }
 
-        const res = await fetch("https://gamja-friend.onrender.com/upload", {
-          method: "POST",
-          body: formData,
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
+        console.log("📦 녹음 파일 크기:", fileInfo.size);
+
+        const base64Audio = await FileSystem.readAsStringAsync(uri, {
+          encoding: FileSystem.EncodingType.Base64,
         });
 
-        if (!res.ok) throw new Error(`서버 오류: ${res.status}`);
+        const res = await fetch("https://gamja-friend.onrender.com/upload-base64", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            diary_id: diary_id?.toString(),
+            history: chatHistory,
+            audio_base64: base64Audio,
+          }),
+        });
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error(`❌ 서버 오류 ${res.status}:`, errorText);
+          throw new Error(`서버 오류: ${res.status}`);
+        }
 
         const data = await res.json();
         const { input, response, audio_base64 } = data;

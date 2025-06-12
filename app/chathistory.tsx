@@ -72,14 +72,17 @@ const styles = StyleSheet.create({
   userText: {
     color: "#000",
     fontSize: 16,
+    fontFamily: "Cafe24Dongdong",
   },
   botText: {
     color: "#000",
     fontSize: 16,
+    fontFamily: "Cafe24Dongdong",
   },
   timeText: {
     fontSize: 12,
     color: "#999",
     marginTop: 6,
+    fontFamily: "Cafe24Dongdong",
   },
 });
