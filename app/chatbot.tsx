@@ -31,6 +31,7 @@ export default function ChatbotVoicePage() {
   >([]);
 
   // 첫 질문 요청 및 base64 음성 재생
+
   useEffect(() => {
   const getDiaryId = async () => {
     if (!parsedDiaryId) {
@@ -43,7 +44,7 @@ export default function ChatbotVoicePage() {
   getDiaryId();
 }, [parsedDiaryId]);
 
-  // 오디오 설정
+
   useEffect(() => {
     const configureAudio = async () => {
       try {
@@ -51,17 +52,22 @@ export default function ChatbotVoicePage() {
           playsInSilentModeIOS: true,
           allowsRecordingIOS: true,
         });
+        console.log("🎧 오디오 모드 설정 완료");
       } catch (error) {
         console.error("❌ 오디오 모드 설정 실패:", error);
       }
     };
+
     configureAudio();
   }, []);
 
-
   useEffect(() => {
+
+    
     const fetchFirstQuestion = async () => {
       try {
+        console.log("🟡 fetchFirstQuestion 실행됨");
+
         let diaryId = parsedDiaryId;
         if (!diaryId) {
           const storedId = await AsyncStorage.getItem("latest_diary_id");
@@ -81,27 +87,40 @@ export default function ChatbotVoicePage() {
         });
 
         const data = await res.json();
+        //console.log("✅ raw data 응답:", data);
         const question = data.question;
         const audioBase64 = data.audio_base64;
+        console.log("🎧 base64 길이:", audioBase64?.length);
+
+        console.log("질문 저장 완료: ", question);
 
         if (!question || !audioBase64) {
           throw new Error("백엔드에서 질문 또는 음성 데이터가 없습니다.");
         }
+
         setHistory([{ user_input: "", response: question }]);
+        console.log("📝 첫 질문 저장 완료");
+
+        await AsyncStorage.setItem(`chat_done_${diaryId}`, "true");
+        console.log("대화 여부 저장");
 
         try {
           const sound = new Audio.Sound();
           await sound.loadAsync({ uri: `data:audio/mp3;base64,${audioBase64}` });
           await sound.setVolumeAsync(1.0);
           await sound.playAsync();
-
+          console.log("🔊 음성 재생 완료");
         } catch (soundError) {
-          console.error("음성 재생 실패:", soundError);
+          console.error("❌ 음성 재생 실패:", soundError);
           Alert.alert("오디오 오류", "음성 재생 중 문제가 발생했습니다.");
         }
+
+        // const sound = new Audio.Sound();
+        // await sound.loadAsync({ uri: data:audio/mp3;base64,${audioBase64} });
+        // await sound.playAsync();
         
       } catch (error) {
-        console.error("첫 질문 생성 실패:", error);
+        console.error("❌ 첫 질문 생성 실패:", error);
         Alert.alert("에러", "챗봇의 첫 질문을 받아오지 못했습니다.");
       }
     };

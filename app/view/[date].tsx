@@ -32,6 +32,7 @@ export default function ViewDiaryPage() {
     emotion: string;
     content: string;
     rawEmotion: string;
+    id: number;
   } | null>(null);
 
   useEffect(() => {
@@ -67,11 +68,16 @@ export default function ViewDiaryPage() {
               emotion: mappedEmotion,
               content: diaryEntry.content,
               rawEmotion: diaryEntry.emotion,
+              id: diaryEntry.id,
             });
           } else {
             setDiary(null);
           }
         } else {
+          const errorData = await response.json().catch(() => null);
+          console.error("❌ 일기 데이터 불러오기 실패!");
+          console.error("상태 코드:", response.status);
+          console.error("응답 내용:", errorData);
           setDiary(null);
         }
       } catch (error) {
@@ -110,50 +116,33 @@ export default function ViewDiaryPage() {
     });
   };
 
-  const getDiaryIdFromDate = async (targetDate: string): Promise<number | null> => {
-    try {
-      const token = await AsyncStorage.getItem("jwtToken");
-      const authHeader = token ? `Bearer ${token}` : "";
-      const response = await fetch("https://gamja-friend.onrender.com/diary/list", {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: authHeader,
-        },
-      });
-      if (!response.ok) return null;
-      const data = await response.json();
-      const entry = data.find((entry: any) => {
-        const entryDate = dayjs(entry.date).format("YYYY-MM-DD");
-        return entryDate === targetDate;
-      });
-      return entry?.id || null;
-    } catch (e) {
-      return null;
-    }
-  };
+  const handleChatbot = async () => {
+    if (!diary) return;
 
-  const handleChatbotRedirect = async () => {
     try {
-      const diaryId = await getDiaryIdFromDate(date as string);
+      const diaryId = diary.id;
       if (!diaryId) {
-        Alert.alert("에러", "해당 일기에 대한 ID를 찾을 수 없습니다.");
+        Alert.alert("에러", "해당 일기 ID를 찾을 수 없습니다.");
         return;
       }
-      await AsyncStorage.setItem("latest_diary_id", String(diaryId));
-      const res = await fetch(`https://gamja-friend.onrender.com/chat-history?diary_id=${diaryId}`);
-      const data = await res.json();
-      if (data.logs && data.logs.length > 0) {
+
+      const isChatDone = await AsyncStorage.getItem(`chat_done_${diaryId}`);
+      //await AsyncStorage.setItem("latest_diary_id", String(diaryId));
+
+      if (isChatDone) {
         router.push({
-          pathname: "/chathistory",
-          params: { date, diary_id: String(diaryId) },
+          pathname: "/chathistorypage",
+          params: { diary_id: String(diaryId) },
         });
       } else {
-        router.push("/chatbot");
+        router.push({
+          pathname: "/chatbot",
+          params: { diary_id: String(diaryId) },
+        });
       }
-    } catch (error) {
-      console.error("감정 챗봇 분기 실패:", error);
-      Alert.alert("오류", "감정 챗봇 이동 중 문제가 발생했습니다.");
+    } catch (e) {
+      console.error("❌ 감정 챗봇 분기 오류", e);
+      Alert.alert("에러", "감정 챗봇 실행 중 오류가 발생했습니다.");
     }
   };
 
@@ -202,8 +191,7 @@ export default function ViewDiaryPage() {
             router.push({
               pathname: "/recommend",
               params: {
-                emotion:
-                  emotionToRecommendationMap[diary?.rawEmotion || ""] ?? diary?.rawEmotion,
+                emotion: emotionToRecommendationMap[diary?.rawEmotion || ""] ?? diary?.rawEmotion,
               },
             })
           }
@@ -212,7 +200,7 @@ export default function ViewDiaryPage() {
           <Text style={styles.extraButtonText}>추천 콘텐츠</Text>
         </Pressable>
 
-        <Pressable style={[styles.extraButton, { marginLeft: 12 }]} onPress={handleChatbotRedirect}>
+        <Pressable style={[styles.extraButton, { marginLeft: 12 }]} onPress={handleChatbot}>
           <Ionicons name="chatbubble-ellipses-outline" size={20} color="#63411F" style={styles.icon} />
           <Text style={styles.extraButtonText}>감정 챗봇</Text>
         </Pressable>
