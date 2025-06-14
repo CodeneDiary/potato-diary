@@ -50,9 +50,7 @@ export default function ViewDiaryPage() {
           }
         );
         if (response.status === 401) {
-          console.warn(
-            "⛔️ 토큰이 만료되었거나 유효하지 않음. 로그인 페이지로 이동."
-          );
+          console.warn("⛔️ 토큰이 만료되었거나 유효하지 않음. 로그인 페이지로 이동.");
           await AsyncStorage.removeItem("jwtToken");
           router.replace("/");
           return;
@@ -64,21 +62,16 @@ export default function ViewDiaryPage() {
             return entryDate === date;
           });
           if (diaryEntry) {
-            const mappedEmotion =
-              emotionToGroup[diaryEntry.emotion] || "neutral";
+            const mappedEmotion = emotionToGroup[diaryEntry.emotion] || "neutral";
             setDiary({
               emotion: mappedEmotion,
               content: diaryEntry.content,
-              rawEmotion: diaryEntry.emotion, // original text label like "좌절"
+              rawEmotion: diaryEntry.emotion,
             });
           } else {
             setDiary(null);
           }
         } else {
-          const errorData = await response.json().catch(() => null);
-          console.error("❌ 일기 데이터 불러오기 실패!");
-          console.error("상태 코드:", response.status);
-          console.error("응답 내용:", errorData);
           setDiary(null);
         }
       } catch (error) {
@@ -117,9 +110,55 @@ export default function ViewDiaryPage() {
     });
   };
 
+  const getDiaryIdFromDate = async (targetDate: string): Promise<number | null> => {
+    try {
+      const token = await AsyncStorage.getItem("jwtToken");
+      const authHeader = token ? `Bearer ${token}` : "";
+      const response = await fetch("https://gamja-friend.onrender.com/diary/list", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: authHeader,
+        },
+      });
+      if (!response.ok) return null;
+      const data = await response.json();
+      const entry = data.find((entry: any) => {
+        const entryDate = dayjs(entry.date).format("YYYY-MM-DD");
+        return entryDate === targetDate;
+      });
+      return entry?.id || null;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const handleChatbotRedirect = async () => {
+    try {
+      const diaryId = await getDiaryIdFromDate(date as string);
+      if (!diaryId) {
+        Alert.alert("에러", "해당 일기에 대한 ID를 찾을 수 없습니다.");
+        return;
+      }
+      await AsyncStorage.setItem("latest_diary_id", String(diaryId));
+      const res = await fetch(`https://gamja-friend.onrender.com/chat-history?diary_id=${diaryId}`);
+      const data = await res.json();
+      if (data.logs && data.logs.length > 0) {
+        router.push({
+          pathname: "/chathistory",
+          params: { date, diary_id: String(diaryId) },
+        });
+      } else {
+        router.push("/chatbot");
+      }
+    } catch (error) {
+      console.error("감정 챗봇 분기 실패:", error);
+      Alert.alert("오류", "감정 챗봇 이동 중 문제가 발생했습니다.");
+    }
+  };
+
   return (
     <View style={styles.container}>
-      {/* 상단 헤더 */}
       <View style={styles.header}>
         <Pressable onPress={() => router.replace("/calendar")}>
           <Ionicons name="chevron-back" size={28} color="#63411F" />
@@ -127,15 +166,10 @@ export default function ViewDiaryPage() {
       </View>
 
       <View style={styles.dateContainer}>
-        <Text style={styles.date}>
-          {dayjs(date as string).format("M월 D일")}
-        </Text>
+        <Text style={styles.date}>{dayjs(date as string).format("M월 D일")}</Text>
         {diary && (
           <>
-            <Image
-              source={emotionImages[diary.emotion]}
-              style={styles.emotionImage}
-            />
+            <Image source={emotionImages[diary.emotion]} style={styles.emotionImage} />
             <Text style={styles.emotionLabel}>{diary.rawEmotion}</Text>
           </>
         )}
@@ -160,6 +194,7 @@ export default function ViewDiaryPage() {
       ) : (
         <Text style={styles.diaryText}>작성된 일기가 없습니다.</Text>
       )}
+
       <View style={styles.extraButtons}>
         <Pressable
           style={styles.extraButton}
@@ -168,31 +203,17 @@ export default function ViewDiaryPage() {
               pathname: "/recommend",
               params: {
                 emotion:
-                  emotionToRecommendationMap[diary?.rawEmotion || ""] ??
-                  diary?.rawEmotion,
+                  emotionToRecommendationMap[diary?.rawEmotion || ""] ?? diary?.rawEmotion,
               },
             })
           }
         >
-          <Ionicons
-            name="sparkles-outline"
-            size={20}
-            color="#63411F"
-            style={styles.icon}
-          />
+          <Ionicons name="sparkles-outline" size={20} color="#63411F" style={styles.icon} />
           <Text style={styles.extraButtonText}>추천 콘텐츠</Text>
         </Pressable>
 
-        <Pressable
-          style={[styles.extraButton, { marginLeft: 12 }]}
-          onPress={() => router.push("/chatbot")}
-        >
-          <Ionicons
-            name="chatbubble-ellipses-outline"
-            size={20}
-            color="#63411F"
-            style={styles.icon}
-          />
+        <Pressable style={[styles.extraButton, { marginLeft: 12 }]} onPress={handleChatbotRedirect}>
+          <Ionicons name="chatbubble-ellipses-outline" size={20} color="#63411F" style={styles.icon} />
           <Text style={styles.extraButtonText}>감정 챗봇</Text>
         </Pressable>
       </View>

@@ -46,11 +46,9 @@ export default function useVoiceRecorder(
 
         const fileInfo = await FileSystem.getInfoAsync(uri);
         if (!fileInfo.exists) {
-          console.warn("❗ 파일이 존재하지 않습니다:", fileInfo.uri);
+          console.warn("파일이 존재하지 않습니다:", fileInfo.uri);
           return;
         }
-
-        console.log("📦 녹음 파일 크기:", fileInfo.size);
 
         const base64Audio = await FileSystem.readAsStringAsync(uri, {
           encoding: FileSystem.EncodingType.Base64,
@@ -70,7 +68,7 @@ export default function useVoiceRecorder(
 
         if (!res.ok) {
           const errorText = await res.text();
-          console.error(`❌ 서버 오류 ${res.status}:`, errorText);
+          console.error(`서버 오류 ${res.status}:`, errorText);
           throw new Error(`서버 오류: ${res.status}`);
         }
 

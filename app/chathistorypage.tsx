@@ -16,12 +16,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 export default function ChatHistoryPage() {
   const router = useRouter();
   const { diary_id } = useLocalSearchParams();
-
+  const { date } = useLocalSearchParams();
   const [diaryId, setDiaryId] = useState<string | undefined>(undefined);
   const [chatData, setChatData] = useState<ChatEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ diary_id가 유효하지 않으면 AsyncStorage에서 대체값 사용
+  // diary_id가 유효하지 않으면 AsyncStorage에서 대체값 사용
   useEffect(() => {
     const resolveDiaryId = async () => {
       if (typeof diary_id === "string" && diary_id !== "undefined") {
@@ -32,14 +32,14 @@ export default function ChatHistoryPage() {
           setDiaryId(storedId);
         } else {
           Alert.alert("에러", "일기 ID가 제공되지 않았고 저장된 ID도 없습니다.");
-          setLoading(false); // 로딩 중지
+          setLoading(false);
         }
       }
     };
     resolveDiaryId();
   }, [diary_id]);
 
-  // ✅ diaryId가 준비된 경우에만 대화 불러오기
+  // diaryId가 준비된 경우에만 대화 불러오기
   useEffect(() => {
     if (!diaryId) return;
 
@@ -65,7 +65,7 @@ export default function ChatHistoryPage() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Pressable onPress={() => router.back()}>
+        <Pressable onPress={() => router.push(`/view/${date}`)}>
           <Ionicons name="chevron-back" size={28} color="#63411F" />
         </Pressable>
         <Text style={styles.title}>대화 내역</Text>
