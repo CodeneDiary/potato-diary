@@ -1,4 +1,3 @@
-// app/write/[date].tsx
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import dayjs from "dayjs";
@@ -6,36 +5,55 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
   Alert,
+  Image,
+  Modal,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 
+const emotionList = ["기쁨", "슬픔", "분노", "불안", "편안", "무감정"];
 const emotionImages: Record<string, any> = {
-  happy: require("../../assets/images/emotion-happy.png"),
-  calm: require("../../assets/images/emotion-calm.png"),
-  sad: require("../../assets/images/emotion-sad.png"),
-  angry: require("../../assets/images/emotion-angry.png"),
-  neutral: require("../../assets/images/emotion-neutral.png"),
-  anxious: require("@/assets/images/emotion-anxious.png"),
+  기쁨: require("../../assets/images/emotion-happy.png"),
+  슬픔: require("../../assets/images/emotion-sad.png"),
+  편안: require("../../assets/images/emotion-calm.png"),
+  분노: require("../../assets/images/emotion-angry.png"),
+  무감정: require("../../assets/images/emotion-neutral.png"),
+  불안: require("@/assets/images/emotion-anxious.png"),
 };
 
-export default function WritePage() {
+export default function ModifyPage() {
   const router = useRouter();
   const { date, initial } = useLocalSearchParams();
   const [text, setText] = useState("");
-  const [emotion, setEmotion] = useState("neutral");
+  const [emotion, setEmotion] = useState("무감정");
+  const [showPicker, setShowPicker] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const isEdit = !!initial;
+
+  const legacyEmotionMap: Record<string, string> = {
+    happy: "기쁨",
+    sad: "슬픔",
+    angry: "분노",
+    anxious: "불안",
+    calm: "편안",
+    neutral: "무감정",
+  };
 
   useEffect(() => {
     if (typeof initial === "string") {
       try {
         const parsed = JSON.parse(initial);
         if (parsed.content) setText(parsed.content);
-        if (parsed.emotion && emotionImages[parsed.emotion]) {
-          setEmotion(parsed.emotion);
+        if (parsed.emotion) {
+          const newEmotion = legacyEmotionMap[parsed.emotion] ?? parsed.emotion;
+          if (emotionImages[newEmotion]) {
+            setEmotion(newEmotion);
+          }
         }
       } catch (e) {}
     }
@@ -52,15 +70,19 @@ export default function WritePage() {
         console.log("❌ 토큰이 없음");
       }
       console.log("🔵 fetch 요청 전: ", { text });
+
       const response = await fetch(
-        "https://gamja-friend.onrender.com/diary/text",
+        `https://gamja-friend.onrender.com/diary/by-date/${date}`,
         {
-          method: "POST",
+          method: "PUT",
           headers: {
             "Content-Type": "application/json",
             Authorization: token ? `Bearer ${token}` : "",
           },
-          body: JSON.stringify({ text, date }),
+          body: JSON.stringify({
+            text,
+            emotion,
+          }),
         }
       );
       console.log("🔵 요청 완료. 응답 상태:", response.status);
@@ -69,12 +91,12 @@ export default function WritePage() {
         const data = await response.json();
         console.log("✅ 응답 데이터:", data);
         //
-        const diaryId = data.diary.id; // 저장된 일기의 id
-        // 챗봇 페이지에서 사용할 수 있도록 저장
+        const diaryId = data.id; // ✅ 저장된 일기의 id
+        // ✅ 1. 챗봇 페이지에서 사용할 수 있도록 저장
         await AsyncStorage.setItem("latest_diary_id", diaryId.toString());
         console.log("🔵 저장된 일기 ID:", diaryId.toString());
         //
-        router.replace(`/view/${date}`); // 저장 후 해당 일기 보기 페이지로 이동
+        router.replace(`/view/${date}`); // ✅ 저장 후 해당 일기 보기 페이지로 이동
         setIsSaving(false);
       } else {
         const errorText = await response.text();
@@ -106,6 +128,44 @@ export default function WritePage() {
           {dayjs(date as string).format("M월 D일")}
         </Text>
       </View>
+
+      {/* 감정 선택 (항상 노출) */}
+      <View style={styles.emotionWrapper}>
+        <TouchableOpacity onPress={() => setShowPicker(true)}>
+          <Image source={emotionImages[emotion]} style={styles.emotionImage} />
+        </TouchableOpacity>
+
+        <Modal visible={showPicker} transparent animationType="fade">
+          <TouchableWithoutFeedback onPress={() => setShowPicker(false)}>
+            <View style={styles.modalOverlay}>
+              <TouchableWithoutFeedback>
+                <View style={styles.modalContent}>
+                  <Text style={styles.modalTitle}>감정을 선택하세요</Text>
+                  <View style={styles.emotionPicker}>
+                    {emotionList.map((e) => (
+                      <TouchableOpacity
+                        key={e}
+                        onPress={() => {
+                          setEmotion(e);
+                          setShowPicker(false);
+                        }}
+                        style={styles.emotionIconBox}
+                      >
+                        <Image
+                          source={emotionImages[e]}
+                          style={styles.emotionIcon}
+                        />
+                        <Text style={styles.emotionLabel}>{e}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+      </View>
+
       {/* 본문 영역 */}
       <View style={styles.content}>
         <TextInput

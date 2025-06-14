@@ -66,7 +66,13 @@ export default function CalendarPage() {
         if (response.ok) {
           const data = await response.json();
           console.log("📘 받아온 일기 데이터:", data);
-          setDiaryList(data);
+          const parsed = data.map((entry: any) => ({
+            id: entry.id,
+            date: entry.date,
+            content: entry.content ?? entry.text ?? "",
+            emotion: entry.emotion ?? "neutral",
+          }));
+          setDiaryList(parsed);
         } else {
           const errorText = await response.text();
           console.error("일기 목록 불러오기 실패:", errorText);

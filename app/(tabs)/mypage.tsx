@@ -40,6 +40,12 @@ export default function MyPage() {
             entry.date.startsWith(currentMonth)
           );
 
+          // content 필드 처리
+          const parsed = thisMonthDiaries.map((entry: any) => ({
+            ...entry,
+            content: entry.content ?? entry.text ?? "",
+          }));
+
           const counts: Record<string, number> = {
             happy: 0,
             sad: 0,
@@ -49,7 +55,7 @@ export default function MyPage() {
             anxious: 0,
           };
 
-          thisMonthDiaries.forEach((entry: any) => {
+          parsed.forEach((entry: any) => {
             const group = emotionToGroup[entry.emotion] || "neutral";
             counts[group]++;
           });

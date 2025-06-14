@@ -41,7 +41,7 @@ export default function ViewDiaryPage() {
         const token = await AsyncStorage.getItem("jwtToken");
         const authHeader = token ? `Bearer ${token}` : "";
         const response = await fetch(
-          "https://gamja-friend.onrender.com/diary/list",
+          `https://gamja-friend.onrender.com/diary/by-date/${date}`,
           {
             method: "GET",
             headers: {
@@ -51,24 +51,22 @@ export default function ViewDiaryPage() {
           }
         );
         if (response.status === 401) {
-          console.warn("⛔️ 토큰이 만료되었거나 유효하지 않음. 로그인 페이지로 이동.");
+          console.warn(
+            "⛔️ 토큰이 만료되었거나 유효하지 않음. 로그인 페이지로 이동."
+          );
           await AsyncStorage.removeItem("jwtToken");
           router.replace("/");
           return;
         }
         if (response.ok) {
           const data = await response.json();
-          const diaryEntry = data.find((entry: any) => {
-            const entryDate = dayjs(entry.date).format("YYYY-MM-DD");
-            return entryDate === date;
-          });
-          if (diaryEntry) {
-            const mappedEmotion = emotionToGroup[diaryEntry.emotion] || "neutral";
+          if (data) {
+            const mappedEmotion = emotionToGroup[data.emotion] || "neutral";
             setDiary({
               emotion: mappedEmotion,
-              content: diaryEntry.content,
-              rawEmotion: diaryEntry.emotion,
-              id: diaryEntry.id,
+              content: data.content ?? data.text ?? "",
+              rawEmotion: data.emotion,
+              id: data.id,
             });
           } else {
             setDiary(null);
@@ -108,7 +106,7 @@ export default function ViewDiaryPage() {
   const handleEdit = () => {
     if (!diary) return;
     router.push({
-      pathname: "/write/[date]",
+      pathname: "/modify/[date]",
       params: {
         date: date as string,
         initial: JSON.stringify(diary),
@@ -155,10 +153,15 @@ export default function ViewDiaryPage() {
       </View>
 
       <View style={styles.dateContainer}>
-        <Text style={styles.date}>{dayjs(date as string).format("M월 D일")}</Text>
+        <Text style={styles.date}>
+          {dayjs(date as string).format("M월 D일")}
+        </Text>
         {diary && (
           <>
-            <Image source={emotionImages[diary.emotion]} style={styles.emotionImage} />
+            <Image
+              source={emotionImages[diary.emotion]}
+              style={styles.emotionImage}
+            />
             <Text style={styles.emotionLabel}>{diary.rawEmotion}</Text>
           </>
         )}
@@ -191,17 +194,32 @@ export default function ViewDiaryPage() {
             router.push({
               pathname: "/recommend",
               params: {
-                emotion: emotionToRecommendationMap[diary?.rawEmotion || ""] ?? diary?.rawEmotion,
+                emotion:
+                  emotionToRecommendationMap[diary?.rawEmotion || ""] ??
+                  diary?.rawEmotion,
               },
             })
           }
         >
-          <Ionicons name="sparkles-outline" size={20} color="#63411F" style={styles.icon} />
+          <Ionicons
+            name="sparkles-outline"
+            size={20}
+            color="#63411F"
+            style={styles.icon}
+          />
           <Text style={styles.extraButtonText}>추천 콘텐츠</Text>
         </Pressable>
 
-        <Pressable style={[styles.extraButton, { marginLeft: 12 }]} onPress={handleChatbot}>
-          <Ionicons name="chatbubble-ellipses-outline" size={20} color="#63411F" style={styles.icon} />
+        <Pressable
+          style={[styles.extraButton, { marginLeft: 12 }]}
+          onPress={handleChatbot}
+        >
+          <Ionicons
+            name="chatbubble-ellipses-outline"
+            size={20}
+            color="#63411F"
+            style={styles.icon}
+          />
           <Text style={styles.extraButtonText}>감정 챗봇</Text>
         </Pressable>
       </View>
