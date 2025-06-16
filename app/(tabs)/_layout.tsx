@@ -1,7 +1,12 @@
+import { listenForTokenChanges } from "@/utils/firebaseTokenListener";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { useEffect } from "react";
 
 export default function TabsLayout() {
+  useEffect(() => {
+    listenForTokenChanges();
+  }, []);
   return (
     <Tabs
       screenOptions={{

@@ -23,6 +23,7 @@ export default function RootLayout() {
           require("@/assets/images/emotion-sad.png"),
           require("@/assets/images/emotion-angry.png"),
           require("@/assets/images/emotion-neutral.png"),
+          require("@/assets/images/emotion-anxious.png"),
           require("@/assets/images/day.png"),
         ]);
       } catch (e) {
