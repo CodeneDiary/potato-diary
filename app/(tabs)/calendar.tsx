@@ -6,7 +6,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import dayjs from "dayjs";
 import { useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, TextInput, View } from "react-native";
 
 type DiaryType = {
   id: number;
@@ -19,6 +19,9 @@ export default function CalendarPage() {
   const router = useRouter();
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const viewModeRef = useRef<"calendar" | "list">("calendar");
+
+  const [searchMode, setSearchMode] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState("");
 
   useEffect(() => {
     viewModeRef.current = viewMode;
@@ -88,20 +91,55 @@ export default function CalendarPage() {
     <View style={styles.container}>
       {/* 헤더 아이콘 */}
       <View style={styles.header}>
-        <View style={styles.iconGroup}>
-          <Pressable
-            onPress={() =>
-              setViewMode(viewMode === "calendar" ? "list" : "calendar")
-            }
-            style={{ marginLeft: 20 }}
-          >
-            <Ionicons
-              name={viewMode === "calendar" ? "list" : "calendar-outline"}
-              size={24}
-              color="#63411F"
+        {searchMode ? (
+          <View style={styles.searchBar}>
+            <TextInput
+              value={searchKeyword}
+              onChangeText={setSearchKeyword}
+              placeholder="검색어를 입력하세요"
+              style={styles.searchInput}
+              autoFocus
+              onSubmitEditing={() => {
+                console.log("검색 실행:", searchKeyword);
+                // TODO: API 요청 예정
+              }}
             />
-          </Pressable>
-        </View>
+            <Pressable
+              onPress={() => {
+                setSearchMode(false);
+                setSearchKeyword("");
+              }}
+            >
+              <Ionicons
+                name="close-circle"
+                size={22}
+                color="#63411F"
+                style={{ marginRight: 15 }}
+              />
+            </Pressable>
+          </View>
+        ) : (
+          <View style={styles.iconGroup}>
+            <Pressable
+              onPress={() => setSearchMode(true)}
+              style={{ marginLeft: 20 }}
+            >
+              <Ionicons name="search" size={24} color="#63411F" />
+            </Pressable>
+            <Pressable
+              onPress={() =>
+                setViewMode(viewMode === "calendar" ? "list" : "calendar")
+              }
+              style={{ marginLeft: 20 }}
+            >
+              <Ionicons
+                name={viewMode === "calendar" ? "list" : "calendar-outline"}
+                size={24}
+                color="#63411F"
+              />
+            </Pressable>
+          </View>
+        )}
       </View>
       {/* 메인 화면 */}
       {viewMode === "calendar" ? (
@@ -146,5 +184,21 @@ const styles = StyleSheet.create({
     backgroundColor: "#63411F",
     alignItems: "center",
     justifyContent: "center",
+  },
+  searchInput: {
+    fontSize: 16,
+    width: 310,
+  },
+  searchBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    height: 40,
+    borderWidth: 1.5,
+    borderColor: "#63411F",
+    backgroundColor: "#FFF",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
   },
 });

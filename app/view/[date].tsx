@@ -87,6 +87,8 @@ export default function ViewDiaryPage() {
   }, [date]);
 
   const handleDelete = () => {
+    if (!diary) return;
+
     Alert.alert("일기 삭제", "정말 삭제하시겠습니까?", [
       {
         text: "취소",
@@ -96,8 +98,31 @@ export default function ViewDiaryPage() {
         text: "삭제",
         style: "destructive",
         onPress: async () => {
-          await AsyncStorage.removeItem(`diary-${date}`);
-          router.push("/calendar");
+          try {
+            const token = await AsyncStorage.getItem("jwtToken");
+            const authHeader = token ? `Bearer ${token}` : "";
+            const response = await fetch(
+              `https://gamja-friend.onrender.com/diary/${diary.id}`,
+              {
+                method: "DELETE",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: authHeader,
+                },
+              }
+            );
+
+            if (response.ok) {
+              router.push("/calendar");
+            } else {
+              const errorData = await response.json().catch(() => null);
+              console.error("❌ 일기 삭제 실패:", errorData);
+              Alert.alert("삭제 실패", "일기를 삭제하지 못했습니다.");
+            }
+          } catch (e) {
+            console.error("❌ 삭제 요청 오류:", e);
+            Alert.alert("오류", "일기 삭제 중 문제가 발생했습니다.");
+          }
         },
       },
     ]);
