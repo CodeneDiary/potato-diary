@@ -22,6 +22,7 @@ export default function CalendarPage() {
 
   const [searchMode, setSearchMode] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState("");
+  const [searchResults, setSearchResults] = useState<DiaryType[] | null>(null);
 
   useEffect(() => {
     viewModeRef.current = viewMode;
@@ -99,15 +100,45 @@ export default function CalendarPage() {
               placeholder="검색어를 입력하세요"
               style={styles.searchInput}
               autoFocus
-              onSubmitEditing={() => {
-                console.log("검색 실행:", searchKeyword);
-                // TODO: API 요청 예정
+              returnKeyType="search"
+              onSubmitEditing={async () => {
+                console.log("🔍 검색어 제출됨:", searchKeyword);
+                try {
+                  const token = await AsyncStorage.getItem("jwtToken");
+                  const response = await fetch(
+                    `https://gamja-friend.onrender.com/diary/search?keyword=${encodeURIComponent(
+                      searchKeyword
+                    )}`,
+                    {
+                      headers: {
+                        Authorization: token ? `Bearer ${token}` : "",
+                      },
+                    }
+                  );
+
+                  if (response.ok) {
+                    const data = await response.json();
+                    const parsed = data.map((entry: any) => ({
+                      id: entry.id,
+                      date: entry.date,
+                      content: entry.content ?? entry.text ?? "",
+                      emotion: entry.emotion ?? "neutral",
+                    }));
+                    setSearchResults(parsed);
+                  } else {
+                    const errorText = await response.text();
+                    console.error("검색 실패:", errorText);
+                  }
+                } catch (error) {
+                  console.error("검색 요청 중 오류 발생", error);
+                }
               }}
             />
             <Pressable
               onPress={() => {
                 setSearchMode(false);
                 setSearchKeyword("");
+                setSearchResults(null);
               }}
             >
               <Ionicons
@@ -142,7 +173,9 @@ export default function CalendarPage() {
         )}
       </View>
       {/* 메인 화면 */}
-      {viewMode === "calendar" ? (
+      {searchResults ? (
+        <DiaryList diaryList={searchResults} />
+      ) : viewMode === "calendar" ? (
         <Calendar diaryList={diaryList} />
       ) : (
         <DiaryList diaryList={diaryList} />
