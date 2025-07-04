@@ -22,7 +22,6 @@ export default function ChatbotVoicePage() {
   const parsedDate = typeof date === "string" ? date : Array.isArray(date) ? date[0] : undefined;
 
   const [diaryId, setDiaryId] = useState<string | undefined>(parsedDiaryId);
-
   const [isRecording, setIsRecording] = useState(false);
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -30,20 +29,48 @@ export default function ChatbotVoicePage() {
     { user_input: string; response: string }[]
   >([]);
 
-  // 첫 질문 요청 및 base64 음성 재생
+  // 자막 상태 추가
+  const [subtitle, setSubtitle] = useState<string>("");
+  const [isTyping, setIsTyping] = useState(false);
+
+  // 자막 타이핑 애니메이션 함수
+  const subtitleRef = useRef(""); // 실시간 자막 저장용 ref
+
+  const typeSubtitle = (text: string) => {
+    if (typeof text !== "string") return;
+
+    subtitleRef.current = ""; // 초기화
+    setIsTyping(true);
+    setSubtitle(""); // 실제 출력 초기화
+
+    let i = 0;
+
+    const interval = setInterval(() => {
+      if (i >= text.length) {
+        clearInterval(interval);
+        setIsTyping(false);
+        setTimeout(() => setSubtitle(""), 5000);
+        return;
+      }
+
+      subtitleRef.current += text.charAt(i); // ref에 추가
+      setSubtitle(subtitleRef.current);     // 상태는 항상 ref 값 복사
+      i++;
+    }, 50);
+  };
+
 
   useEffect(() => {
-  const getDiaryId = async () => {
-    if (!parsedDiaryId) {
-      const storedId = await AsyncStorage.getItem("latest_diary_id");
-      if (storedId) {
-        setDiaryId(storedId);
+    const getDiaryId = async () => {
+      if (!parsedDiaryId) {
+        const storedId = await AsyncStorage.getItem("latest_diary_id");
+        if (storedId) {
+          setDiaryId(storedId);
+        }
       }
-    }
-  };
-  getDiaryId();
-}, [parsedDiaryId]);
-
+    };
+    getDiaryId();
+  }, [parsedDiaryId]);
 
   useEffect(() => {
     const configureAudio = async () => {
@@ -62,8 +89,6 @@ export default function ChatbotVoicePage() {
   }, []);
 
   useEffect(() => {
-
-    
     const fetchFirstQuestion = async () => {
       try {
         console.log("🟡 fetchFirstQuestion 실행됨");
@@ -87,12 +112,9 @@ export default function ChatbotVoicePage() {
         });
 
         const data = await res.json();
-        //console.log("✅ raw data 응답:", data);
         const question = data.question;
         const audioBase64 = data.audio_base64;
         console.log("🎧 base64 길이:", audioBase64?.length);
-
-        console.log("질문 저장 완료: ", question);
 
         if (!question || !audioBase64) {
           throw new Error("백엔드에서 질문 또는 음성 데이터가 없습니다.");
@@ -102,7 +124,6 @@ export default function ChatbotVoicePage() {
         console.log("📝 첫 질문 저장 완료");
 
         await AsyncStorage.setItem(`chat_done_${diaryId}`, "true");
-        console.log("대화 여부 저장");
 
         try {
           const sound = new Audio.Sound();
@@ -115,10 +136,9 @@ export default function ChatbotVoicePage() {
           Alert.alert("오디오 오류", "음성 재생 중 문제가 발생했습니다.");
         }
 
-        // const sound = new Audio.Sound();
-        // await sound.loadAsync({ uri: data:audio/mp3;base64,${audioBase64} });
-        // await sound.playAsync();
-        
+        // 자막 출력
+        typeSubtitle(question);
+
       } catch (error) {
         console.error("❌ 첫 질문 생성 실패:", error);
         Alert.alert("에러", "챗봇의 첫 질문을 받아오지 못했습니다.");
@@ -128,13 +148,13 @@ export default function ChatbotVoicePage() {
     fetchFirstQuestion();
   }, [parsedDiaryId]);
 
-  // 대화 응답 저장 (음성은 따로 재생)
   const handleComplete = (
     input: string,
     response: string,
     audioBase64?: string
   ) => {
     setHistory((prev) => [...prev, { user_input: input, response }]);
+    typeSubtitle(response); // 응답 자막 출력
 
     if (audioBase64) {
       const playAudio = async () => {
@@ -148,7 +168,6 @@ export default function ChatbotVoicePage() {
 
   const { toggleRecording } = useVoiceRecorder(handleComplete, history, diaryId);
   console.log("🎯 parsedDiaryId to VoiceRecorder:", diaryId);
-
 
   const handleMicPress = () => {
     setIsRecording((prev) => !prev);
@@ -209,6 +228,13 @@ export default function ChatbotVoicePage() {
           </Pressable>
         </Animated.View>
       </View>
+
+      {/* 자막 UI */}
+      {subtitle !== "" && (
+        <View style={styles.subtitleContainer}>
+          <Text style={styles.subtitleText}>{subtitle}</Text>
+        </View>
+      )}
     </View>
   );
 }
@@ -261,5 +287,22 @@ const styles = StyleSheet.create({
   },
   micButtonActive: {
     backgroundColor: "#C94A4A",
+  },
+  // 자막 스타일
+  subtitleContainer: {
+    position: "absolute",
+    bottom: 100,
+    left: 20,
+    right: 20,
+    backgroundColor: "rgba(225, 173, 99, 0.6)",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  subtitleText: {
+    color: "#000000",
+    fontSize: 16,
+    textAlign: "center",
+    fontFamily: "Cafe24Dongdong",
   },
 });
