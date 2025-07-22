@@ -1,15 +1,57 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Device from "expo-device";
+import * as Notifications from "expo-notifications";
 import { useRouter } from "expo-router";
 import { deleteUser, getAuth, signOut } from "firebase/auth";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Alert, Pressable, StyleSheet, Switch, Text, View } from "react-native";
 
 export default function SettingsPage() {
   const router = useRouter();
   const [isEnabled, setIsEnabled] = useState(true);
 
-  const toggleSwitch = () => setIsEnabled((prev) => !prev);
+  useEffect(() => {
+    const subscription = Notifications.addNotificationReceivedListener(
+      (notification) => {
+        console.log("📬 알림 수신됨:", notification);
+      }
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  const toggleSwitch = async () => {
+    const newValue = !isEnabled;
+    setIsEnabled(newValue);
+
+    if (newValue) {
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("권한 필요", "알림 권한이 필요합니다.");
+        setIsEnabled(false);
+        return;
+      }
+
+      if (Device.isDevice) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: "감자친구",
+            body: "오늘의 하루를 기록해보세요!",
+          },
+          trigger: {
+            type: "daily" as any,
+            hour: 20,
+            minute: 0,
+          },
+        });
+      }
+    } else {
+      await Notifications.cancelAllScheduledNotificationsAsync();
+    }
+  };
 
   const handleLogout = async () => {
     const auth = getAuth();
