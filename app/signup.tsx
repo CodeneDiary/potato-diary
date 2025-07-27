@@ -39,18 +39,36 @@ export default function SignUpPage() {
       );
       alert("회원가입하였습니다");
       router.replace("/"); // 회원가입 후 로그인 페이지로 이동
-    } catch (error) {
-      if (error instanceof Error) {
-        console.error("회원가입 오류:", error.message);
-        alert("회원가입 실패. " + error.message);
-      } else {
-        console.error("회원가입 오류: 알 수 없는 오류", error);
-        alert("회원가입 실패. 알 수 없는 오류");
+    } catch (error: any) {
+      // Firebase 에러 코드별 한국어 메시지
+      let errorMessage = "";
+      switch (error.code) {
+        case "auth/email-already-in-use":
+          errorMessage = "이미 사용 중인 이메일입니다.";
+          break;
+        case "auth/invalid-email":
+          errorMessage = "유효하지 않은 이메일 형식입니다.";
+          break;
+        case "auth/weak-password":
+          errorMessage = "비밀번호가 너무 약합니다. 6자 이상 입력해주세요.";
+          break;
+        case "auth/operation-not-allowed":
+          errorMessage = "이메일/비밀번호 계정이 활성화되지 않았습니다.";
+          break;
+        default:
+          errorMessage = "회원가입 중 오류가 발생했습니다: " + error.message;
+          break;
       }
+
+      alert("회원가입 실패: " + errorMessage);
     }
   };
 
-  const isFormValid = email !== "" && password !== "" && confirmPassword !== "";
+  const canSignUp =
+    email !== "" &&
+    password !== "" &&
+    confirmPassword !== "" &&
+    !passwordMatchError;
 
   return (
     <View style={styles.container}>
@@ -65,10 +83,11 @@ export default function SignUpPage() {
           keyboardType="email-address"
           autoCapitalize="none"
         />
+
         <Text style={styles.text}>비밀번호</Text>
         <TextInput
           style={styles.input}
-          placeholder="비밀번호"
+          placeholder="비밀번호 (6자 이상)"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
@@ -84,13 +103,14 @@ export default function SignUpPage() {
         {passwordMatchError && (
           <Text style={styles.errorText}>비밀번호가 일치하지 않습니다.</Text>
         )}
+
         <TouchableOpacity
           style={[
             styles.signUpButton,
-            (!isFormValid || passwordMatchError) && styles.signUpButtonDisabled,
+            !canSignUp && styles.signUpButtonDisabled,
           ]}
           onPress={handleSignUp}
-          disabled={!isFormValid || passwordMatchError}
+          disabled={!canSignUp}
         >
           <Text style={styles.signUpButtonText}>회원가입</Text>
         </TouchableOpacity>
@@ -153,5 +173,17 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     marginBottom: 10,
     fontWeight: "semibold",
+  },
+  infoText: {
+    color: "#63411f",
+    fontSize: 12,
+    marginTop: 5,
+    marginLeft: 5,
+  },
+  warningText: {
+    color: "#ff9900",
+    fontSize: 12,
+    marginBottom: 10,
+    marginLeft: 5,
   },
 });

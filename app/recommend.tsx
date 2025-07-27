@@ -1,7 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Image,
+  Linking,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 export default function Recommend() {
   const router = useRouter();
@@ -9,7 +16,7 @@ export default function Recommend() {
   const [selectedCategory, setSelectedCategory] = useState<string>("책");
   const [showDropdown, setShowDropdown] = useState(false);
   const [recommendations, setRecommendations] = useState<
-    { title: string; url: string }[]
+    { title: string; url: string; emotion_tags: string; image?: string }[]
   >([]);
   const [emotion, setEmotion] = useState<string>(
     typeof passedEmotion === "string" ? passedEmotion : ""
@@ -30,11 +37,9 @@ export default function Recommend() {
     }
     try {
       const response = await fetch(
-        "https://gamja-friend.onrender.com/recommend/from-emotion?emotion=" +
-          emotion,
-        {
-          method: "POST",
-        }
+        `https://gamja-friend.onrender.com/api/recommend?emotion=${encodeURIComponent(
+          emotion
+        )}`
       );
       const data = await response.json();
       console.log("📟 응답 상태 코드:", response.status);
@@ -135,24 +140,43 @@ export default function Recommend() {
               style={{
                 flexDirection: "row",
                 alignItems: "center",
-                marginVertical: 4,
+                marginVertical: 8,
               }}
             >
-              <Text
-                style={{
-                  fontFamily: "Cafe24Dongdong",
-                  color: "#63411F",
-                  fontSize: 20,
-                  marginRight: 8,
-                }}
-              >
-                • {item.title}
-              </Text>
-              {item.url ? (
-                <Pressable onPress={() => Linking.openURL(item.url)}>
-                  <Ionicons name="link-outline" size={18} color="#63411F" />
-                </Pressable>
-              ) : null}
+              {item.image && (
+                <View style={{ marginRight: 8 }}>
+                  <Image
+                    source={{ uri: item.image }}
+                    style={{ width: 50, height: 75, borderRadius: 4 }}
+                  />
+                </View>
+              )}
+              <View style={{ flexShrink: 1 }}>
+                <Text
+                  style={{
+                    fontFamily: "Cafe24Dongdong",
+                    color: "#63411F",
+                    fontSize: 20,
+                    marginBottom: 2,
+                  }}
+                >
+                  • {item.title}
+                </Text>
+                <Text
+                  style={{
+                    fontFamily: "Cafe24Dongdong",
+                    color: "#a86f2d",
+                    fontSize: 14,
+                  }}
+                >
+                  {item.emotion_tags}
+                </Text>
+                {item.url && (
+                  <Pressable onPress={() => Linking.openURL(item.url)}>
+                    <Ionicons name="link-outline" size={18} color="#63411F" />
+                  </Pressable>
+                )}
+              </View>
             </View>
           ))}
         </View>
