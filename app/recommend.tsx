@@ -5,6 +5,7 @@ import {
   Image,
   Linking,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -16,7 +17,7 @@ export default function Recommend() {
   const [selectedCategory, setSelectedCategory] = useState<string>("책");
   const [showDropdown, setShowDropdown] = useState(false);
   const [recommendations, setRecommendations] = useState<
-    { title: string; url: string; emotion_tags: string; image?: string }[]
+    { title: string; url: string; image?: string }[]
   >([]);
   const [emotion, setEmotion] = useState<string>(
     typeof passedEmotion === "string" ? passedEmotion : ""
@@ -37,9 +38,11 @@ export default function Recommend() {
     }
     try {
       const response = await fetch(
-        `https://gamja-friend.onrender.com/api/recommend?emotion=${encodeURIComponent(
-          emotion
-        )}`
+        "https://gamja-friend.onrender.com/recommend/from-emotion?emotion=" +
+          emotion,
+        {
+          method: "POST",
+        }
       );
       const data = await response.json();
       console.log("📟 응답 상태 코드:", response.status);
@@ -133,53 +136,59 @@ export default function Recommend() {
         )}
       </View>
       {selectedCategory && (
-        <View style={styles.detailContainer}>
-          {recommendations.map((item, index) => (
-            <View
-              key={index}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginVertical: 8,
-              }}
-            >
-              {item.image && (
-                <View style={{ marginRight: 8 }}>
+        <ScrollView
+          style={styles.scrollArea}
+          contentContainerStyle={{ paddingBottom: 40 }}
+        >
+          <View style={styles.detailContainer}>
+            {recommendations.map((item, index) => (
+              <View
+                key={index}
+                style={{
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                  marginVertical: 4,
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 4,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontFamily: "Cafe24Dongdong",
+                      color: "#63411F",
+                      fontSize: 20,
+                      marginRight: 8,
+                    }}
+                  >
+                    • {item.title}
+                  </Text>
+                  {item.url ? (
+                    <Pressable onPress={() => Linking.openURL(item.url)}>
+                      <Ionicons name="link-outline" size={18} color="#63411F" />
+                    </Pressable>
+                  ) : null}
+                </View>
+                {item.image && (
                   <Image
                     source={{ uri: item.image }}
-                    style={{ width: 50, height: 75, borderRadius: 4 }}
+                    style={{
+                      width: 200,
+                      aspectRatio: 3 / 4, // 예: 세로형 책 비율
+                      borderRadius: 8,
+                      marginBottom: 4,
+                    }}
+                    resizeMode="contain"
                   />
-                </View>
-              )}
-              <View style={{ flexShrink: 1 }}>
-                <Text
-                  style={{
-                    fontFamily: "Cafe24Dongdong",
-                    color: "#63411F",
-                    fontSize: 20,
-                    marginBottom: 2,
-                  }}
-                >
-                  • {item.title}
-                </Text>
-                <Text
-                  style={{
-                    fontFamily: "Cafe24Dongdong",
-                    color: "#a86f2d",
-                    fontSize: 14,
-                  }}
-                >
-                  {item.emotion_tags}
-                </Text>
-                {item.url && (
-                  <Pressable onPress={() => Linking.openURL(item.url)}>
-                    <Ionicons name="link-outline" size={18} color="#63411F" />
-                  </Pressable>
                 )}
               </View>
-            </View>
-          ))}
-        </View>
+            ))}
+          </View>
+        </ScrollView>
       )}
     </View>
   );
@@ -263,5 +272,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: "Cafe24Dongdong",
     color: "#63411F",
+  },
+  scrollArea: {
+    maxHeight: 600,
+    marginBottom: 40,
+    paddingLeft: 10,
+    width: 360,
   },
 });
