@@ -109,7 +109,6 @@ export default function SettingsPage() {
 
       {/* 목록 */}
       <View style={styles.rowContainer}>
-        {" "}
         <View style={styles.itemRow}>
           <Text style={styles.itemText}>알림</Text>
           <Switch

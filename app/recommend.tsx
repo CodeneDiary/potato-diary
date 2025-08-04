@@ -126,8 +126,9 @@ export default function Recommend() {
                   setSelectedCategory(category);
                   setShowDropdown(false);
                 }}
+                style={styles.dropdownItemWrapper}
               >
-                <Text style={styles.dropdownItem}>
+                <Text style={styles.dropdownItemText}>
                   {category.charAt(0).toUpperCase() + category.slice(1)}
                 </Text>
               </Pressable>
@@ -256,22 +257,21 @@ const styles = StyleSheet.create({
   },
   dropdownMenu: {
     width: 330,
-    marginTop: 90,
-    marginLeft: 30,
+    marginTop: 5,
     backgroundColor: "#FFF7E0",
     borderWidth: 1,
     borderColor: "#63411F",
     borderRadius: 8,
     overflow: "hidden",
-    position: "absolute",
-    zIndex: 10,
   },
-  dropdownItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+  dropdownItemText: {
     fontSize: 18,
     fontFamily: "Cafe24Dongdong",
     color: "#63411F",
+  },
+  dropdownItemWrapper: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
   },
   scrollArea: {
     maxHeight: 600,
