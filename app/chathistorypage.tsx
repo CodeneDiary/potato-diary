@@ -21,25 +21,49 @@ export default function ChatHistoryPage() {
   const [chatData, setChatData] = useState<ChatEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ diary_id가 유효하지 않으면 AsyncStorage에서 대체값 사용
+  // diary_id가 유효하지 않으면 AsyncStorage에서 대체값 사용
+  // useEffect(() => {
+  //   const resolveDiaryId = async () => {
+  //     if (typeof diary_id === "string" && diary_id !== "undefined") {
+  //       setDiaryId(diary_id);
+  //     } else {
+  //       const storedId = await AsyncStorage.getItem("latest_diary_id");
+  //       if (storedId) {
+  //         setDiaryId(storedId);
+  //       } else {
+  //         Alert.alert("에러", "일기 ID가 제공되지 않았고 저장된 ID도 없습니다.");
+  //         setLoading(false); // 로딩 중지
+  //       }
+  //     }
+  //   };
+  //   resolveDiaryId();
+  // }, [diary_id]);
   useEffect(() => {
-    const resolveDiaryId = async () => {
-      if (typeof diary_id === "string" && diary_id !== "undefined") {
-        setDiaryId(diary_id);
-      } else {
-        const storedId = await AsyncStorage.getItem("latest_diary_id");
-        if (storedId) {
-          setDiaryId(storedId);
-        } else {
-          Alert.alert("에러", "일기 ID가 제공되지 않았고 저장된 ID도 없습니다.");
-          setLoading(false); // 로딩 중지
-        }
+  const resolveDiaryId = async () => {
+    if (typeof diary_id === "string" && diary_id !== "undefined") {
+      setDiaryId(diary_id);
+    } else {
+      const userId = await AsyncStorage.getItem("firebase_uid");
+      if (!userId) {
+        Alert.alert("에러", "사용자 ID가 없습니다. 다시 로그인해주세요.");
+        setLoading(false);
+        return;
       }
-    };
-    resolveDiaryId();
-  }, [diary_id]);
 
-  // ✅ diaryId가 준비된 경우에만 대화 불러오기
+      const storedId = await AsyncStorage.getItem(`latest_diary_id_${userId}`);
+      if (storedId) {
+        setDiaryId(storedId);
+      } else {
+        Alert.alert("에러", "일기 ID가 제공되지 않았고 저장된 ID도 없습니다.");
+        setLoading(false);
+      }
+    }
+  };
+  resolveDiaryId();
+}, [diary_id]);
+
+
+  // diaryId가 준비된 경우에만 대화 불러오기
   useEffect(() => {
     if (!diaryId) return;
 

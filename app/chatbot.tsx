@@ -61,16 +61,23 @@ export default function ChatbotVoicePage() {
 
 
   useEffect(() => {
-    const getDiaryId = async () => {
-      if (!parsedDiaryId) {
-        const storedId = await AsyncStorage.getItem("latest_diary_id");
-        if (storedId) {
-          setDiaryId(storedId);
-        }
+  const getDiaryId = async () => {
+    if (!parsedDiaryId) {
+      //const storedId = await AsyncStorage.getItem("latest_diary_id");
+      const userId = await AsyncStorage.getItem("firebase_uid");
+      if (!userId) {
+        console.error("❌ firebase_uid를 찾을 수 없습니다.");
+        return;
       }
-    };
-    getDiaryId();
-  }, [parsedDiaryId]);
+
+      const storedId = await AsyncStorage.getItem(`latest_diary_id_${userId}`);
+      if (storedId) {
+        setDiaryId(storedId);
+      }
+    }
+  };
+  getDiaryId();
+}, [parsedDiaryId]);
 
   useEffect(() => {
     const configureAudio = async () => {
@@ -122,6 +129,13 @@ export default function ChatbotVoicePage() {
 
         setHistory([{ user_input: "", response: question }]);
         console.log("📝 첫 질문 저장 완료");
+
+        //
+        const userId = await AsyncStorage.getItem("firebase_uid");
+        if (userId) {
+          await AsyncStorage.setItem(`latest_diary_id_${userId}`, diaryId);
+        }
+        //
 
         await AsyncStorage.setItem(`chat_done_${diaryId}`, "true");
 
