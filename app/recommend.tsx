@@ -19,9 +19,15 @@ export default function Recommend() {
   const [recommendations, setRecommendations] = useState<
     { title: string; url: string; image?: string }[]
   >([]);
-  const [emotion, setEmotion] = useState<string>(
-    typeof passedEmotion === "string" ? passedEmotion : ""
-  );
+  const mapNoEmotionTo = ["흥미", "신남", "기대", "설렘", "쾌감"];
+  const [emotion, setEmotion] = useState<string>(() => {
+    if (typeof passedEmotion !== "string") return "";
+    if (passedEmotion === "무감정") {
+      const randomIndex = Math.floor(Math.random() * mapNoEmotionTo.length);
+      return mapNoEmotionTo[randomIndex];
+    }
+    return passedEmotion;
+  });
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   console.log("🔵 전달된 감정:", passedEmotion);
 
@@ -154,38 +160,65 @@ export default function Recommend() {
                 <View
                   style={{
                     flexDirection: "row",
+                    justifyContent: "space-between",
                     alignItems: "center",
                     marginBottom: 4,
+                    flexWrap: "wrap",
+                    gap: 4,
                   }}
                 >
-                  <Text
-                    style={{
-                      fontFamily: "Cafe24Dongdong",
-                      color: "#63411F",
-                      fontSize: 20,
-                      marginRight: 8,
-                    }}
-                  >
-                    • {item.title}
-                  </Text>
-                  {item.url ? (
-                    <Pressable onPress={() => Linking.openURL(item.url)}>
-                      <Ionicons name="link-outline" size={18} color="#63411F" />
+                  {!!item.url?.trim() ? (
+                    <Pressable onPress={() => Linking.openURL(item.url!)}>
+                      <Text
+                        style={{
+                          fontFamily: "Cafe24Dongdong",
+                          color: "#63411F",
+                          fontSize: 20,
+                          marginBottom: 4,
+                        }}
+                      >
+                        • {item.title} 🔗
+                      </Text>
+                      {item.image && (
+                        <Image
+                          source={{ uri: item.image }}
+                          style={{
+                            width: 200,
+                            aspectRatio: 3 / 4,
+                            borderRadius: 8,
+                            marginBottom: 4,
+                          }}
+                          resizeMode="contain"
+                        />
+                      )}
                     </Pressable>
-                  ) : null}
+                  ) : (
+                    <>
+                      <Text
+                        style={{
+                          fontFamily: "Cafe24Dongdong",
+                          color: "#63411F",
+                          fontSize: 20,
+                          marginBottom: 4,
+                        }}
+                      >
+                        • {item.title}
+                      </Text>
+                      {item.image && (
+                        <Image
+                          source={{ uri: item.image }}
+                          style={{
+                            width: 200,
+                            aspectRatio: 3 / 4,
+                            borderRadius: 8,
+                            marginBottom: 4,
+                          }}
+                          resizeMode="contain"
+                        />
+                      )}
+                    </>
+                  )}
                 </View>
-                {item.image && (
-                  <Image
-                    source={{ uri: item.image }}
-                    style={{
-                      width: 200,
-                      aspectRatio: 3 / 4, // 예: 세로형 책 비율
-                      borderRadius: 8,
-                      marginBottom: 4,
-                    }}
-                    resizeMode="contain"
-                  />
-                )}
               </View>
             ))}
           </View>
