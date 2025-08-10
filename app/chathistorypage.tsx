@@ -38,6 +38,7 @@ export default function ChatHistoryPage() {
   //   };
   //   resolveDiaryId();
   // }, [diary_id]);
+  
   useEffect(() => {
   const resolveDiaryId = async () => {
     if (typeof diary_id === "string" && diary_id !== "undefined") {

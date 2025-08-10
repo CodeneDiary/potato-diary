@@ -201,11 +201,45 @@ export default function ChatbotVoicePage() {
     ]).start();
   };
 
-  const handleExit = () => {
-    router.push({
-      pathname: "/chathistorypage",
-      query: { diary_id: parsedDiaryId },
-    } as any);
+  // const handleExit = () => {
+  //   router.push({
+  //     pathname: "/chathistorypage",
+  //     query: { diary_id: parsedDiaryId },
+  //   } as any);
+  // };
+  // 수정
+  const handleExit = async () => {
+    try {
+      // 현재 화면에서 사용할 diaryId 결정 (state가 우선, 없으면 URL 파라미터)
+      const effectiveDiaryId = diaryId ?? parsedDiaryId;
+      if (!effectiveDiaryId) {
+        Alert.alert("에러", "일기 ID가 없습니다. 다시 시도해주세요.");
+        return;
+      }
+
+      // UID 조회
+      const userId = await AsyncStorage.getItem("firebase_uid");
+
+      // 유저별 키에 먼저 저장
+      if (userId) {
+        await AsyncStorage.setItem(
+          `latest_diary_id_${userId}`,
+          String(effectiveDiaryId)
+        );
+      }
+
+      // 레거시 키에도 미러 저장 (히스토리 페이지 fallback용)
+      await AsyncStorage.setItem("latest_diary_id", String(effectiveDiaryId));
+
+      // 라우팅 (쿼리로 diary_id 전달하면 히스토리 페이지가 가장 우선 사용)
+      router.push({
+        pathname: "/chathistorypage",
+        query: { diary_id: String(effectiveDiaryId) },
+      } as any);
+    } catch (e) {
+      console.error("Exit error:", e);
+      Alert.alert("에러", "대화 내역 이동 중 문제가 발생했습니다.");
+    }
   };
 
   return (
